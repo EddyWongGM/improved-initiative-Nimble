@@ -98,6 +98,7 @@
     "react-markdown": "^8.0.7",
     "react-string-replace-recursively": "^0.2.0",
     "redis": "^4.6.8",
+    "remark-breaks": "^4.0.0",
     "request-filtering-agent": "^3.2.1",
     "retry": "^0.13.1",
     "socket.io": "^4.8.3",

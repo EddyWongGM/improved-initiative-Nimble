@@ -5,6 +5,7 @@ import { SpecialComponents } from "react-markdown/lib/ast-to-react";
 import { NormalComponents } from "react-markdown/lib/complex-types";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import * as ReactReplace from "react-string-replace-recursively";
+import remarkBreaks from "remark-breaks";
 
 import { Spell } from "../../common/Spell";
 import {
@@ -87,7 +88,12 @@ export class TextEnricher {
     };
 
     return (
-      <ReactMarkdown children={text} components={components} rawSourcePos />
+      <ReactMarkdown
+        children={preserveBlankLines(text)}
+        components={components}
+        remarkPlugins={[remarkBreaks]}
+        rawSourcePos
+      />
     );
   };
 
@@ -232,6 +238,17 @@ export class TextEnricher {
 
     return ReactReplace(replaceConfig);
   }
+}
+
+// CommonMark collapses any run of blank lines into a single paragraph
+// break, so "\n\n" and "\n\n\n\n" render identically. Insert an empty
+// (non-breaking-space) paragraph for each blank line beyond the first so
+// extra blank lines the author typed show up as extra vertical gaps.
+function preserveBlankLines(text: string): string {
+  return text.replace(/\n{2,}/g, match => {
+    const extraBlankLines = match.length - 2;
+    return "\n\n" + "&nbsp;\n\n".repeat(extraBlankLines);
+  });
 }
 
 export const TextEnricherContext = React.createContext(

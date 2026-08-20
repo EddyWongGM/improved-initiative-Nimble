@@ -43,9 +43,9 @@ export class SpellLibraryReferencePane extends React.Component<SpellLibraryRefer
       groupFn: l => ({ key: l.Meta().Path })
     },
     {
-      label: "Level",
+      label: "Tier",
       groupFn: l => ({
-        label: LevelOrCantrip(l.Meta().FilterDimensions.Level),
+        label: TierOrCantrip(l.Meta().FilterDimensions.Level),
         key: GetAlphaSortableLevelString(l.Meta().FilterDimensions.Level)
       })
     },
@@ -86,9 +86,9 @@ export class SpellLibraryReferencePane extends React.Component<SpellLibraryRefer
   };
 }
 
-function LevelOrCantrip(levelString: string) {
+function TierOrCantrip(levelString: string) {
   if (levelString == "0") {
     return "Cantrip";
   }
-  return "Level " + levelString;
+  return "Tier " + levelString;
 }

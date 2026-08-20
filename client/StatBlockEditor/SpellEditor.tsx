@@ -100,7 +100,7 @@ function StandardEditor() {
     <div className="c-spell-editor-fields">
       <FieldRow label="Name" name="Name" />
       <FieldRow label="Source" name="Source" />
-      <FieldRow label="Level" name="Level" />
+      <FieldRow label="Tier" name="Level" />
       <FieldRow label="School" name="School" />
       <FieldRow label="Casting Time" name="CastingTime" />
       <label className="inline">
