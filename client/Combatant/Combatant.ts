@@ -63,6 +63,7 @@ export class Combatant {
   public StatBlock = ko.observable<StatBlock>(StatBlock.Default());
   public Hidden = ko.observable(false);
   public RevealedAC = ko.observable(false);
+  public HasTakenTurn = ko.observable(false);
   public IndexLabel = ko.observable(0);
   public Color = ko.observable("");
   public ReactionsSpent = ko.observable(0);
@@ -101,6 +102,7 @@ export class Combatant {
     this.Tags(Tag.FromTagStates(savedCombatant.Tags, this));
     this.Hidden(savedCombatant.Hidden);
     this.RevealedAC(savedCombatant.RevealedAC);
+    this.HasTakenTurn(savedCombatant.HasTakenTurn || false);
     this.Color(savedCombatant.Color || "");
     this.ReactionsSpent(savedCombatant.ReactionsSpent || 0);
     this.CombatTimer.SetElapsedRounds(savedCombatant.RoundCounter || 0);
@@ -298,6 +300,7 @@ export class Combatant {
         .map(t => t.GetState()),
       Hidden: this.Hidden(),
       RevealedAC: this.RevealedAC(),
+      HasTakenTurn: this.HasTakenTurn(),
       Color: this.Color(),
       ReactionsSpent: this.ReactionsSpent(),
       RoundCounter: this.CombatTimer.ElapsedRounds(),

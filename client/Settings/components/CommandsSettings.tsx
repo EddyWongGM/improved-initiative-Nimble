@@ -58,7 +58,7 @@ export function CommandsSettings(props: CommandsSettingsProps) {
         <span className="toolbar-label">Toolbar</span>
       </div>
       {props.encounterCommands.map(buildCommandSettingRow(props, false))}
-      <h2>Combatant Commands</h2>
+      <h2>Name Commands</h2>
       <div className="command-options-labels">
         <span className="hotkey-label">Hotkey</span>
         <span className="toolbar-label">Toolbar</span>

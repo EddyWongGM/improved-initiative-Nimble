@@ -15,6 +15,8 @@ export const CommandContext = React.createContext({
   ) => {},
   SetCombatantColor: (combatantId: string, color: string) => {},
   ToggleCombatantSpentReaction: (combatantId: string) => {},
+  ToggleCombatantHasTakenTurn: (combatantId: string) => {},
+  ResetHasTakenTurnForAllCombatants: () => {},
   CombatantsPendingRemove: [] as Combatant[],
   RestoreCombatants: () => {},
   FlushCombatants: () => {},

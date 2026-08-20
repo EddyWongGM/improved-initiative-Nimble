@@ -30,7 +30,8 @@ export function ToPlayerViewCombatantState(
     ImageURL: sendImage ? combatant.StatBlock().ImageURL : "",
     AC: combatant.RevealedAC() ? combatant.StatBlock().AC.Value : undefined,
     Color: combatant.Color(),
-    ReactionsSpent: combatant.ReactionsSpent()
+    ReactionsSpent: combatant.ReactionsSpent(),
+    HasTakenTurn: combatant.HasTakenTurn()
   };
 }
 

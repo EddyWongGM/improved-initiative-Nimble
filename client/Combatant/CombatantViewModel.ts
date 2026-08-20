@@ -157,6 +157,10 @@ export class CombatantViewModel {
     }
   }
 
+  public ToggleHasTakenTurn(): void {
+    this.Combatant.HasTakenTurn(!this.Combatant.HasTakenTurn());
+  }
+
   public ToggleHidden() {
     if (this.Combatant.Hidden()) {
       this.Combatant.Hidden(false);

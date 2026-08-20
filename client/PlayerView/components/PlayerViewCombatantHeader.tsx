@@ -11,7 +11,7 @@ export const PlayerViewCombatantHeader = (props: {
 }) => (
   <div className="combatant--header">
     {props.portraitColumnVisible && <div className="combatant__portrait" />}
-    <div className="combatant__name">Combatant</div>
+    <div className="combatant__name">Name</div>
     <div className="combatant__hp">
       <span className="fas fa-heart" />
     </div>

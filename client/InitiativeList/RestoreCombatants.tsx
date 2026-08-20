@@ -65,7 +65,7 @@ function getCombatantsRemovedMessage(
     return (
       <span>
         <strong>{combatantName}</strong> and {combatantsCount - 1} other
-        combatants removed from encounter.
+        names removed from encounter.
       </span>
     );
   }

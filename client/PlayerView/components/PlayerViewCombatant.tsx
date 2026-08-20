@@ -47,6 +47,9 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
               style={{ color: this.props.combatant.Color }}
             />
           )}
+          {this.props.combatant.HasTakenTurn && (
+            <span className="combatant__has-taken-turn-icon fas fa-check" />
+          )}
           {this.props.combatant.Name}
         </div>
         <div

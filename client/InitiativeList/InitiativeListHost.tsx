@@ -104,6 +104,20 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
     [tracker]
   );
 
+  const toggleCombatantHasTakenTurn = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+      combatantViewModel.ToggleHasTakenTurn();
+    },
+    [tracker]
+  );
+
+  const resetHasTakenTurnForAllCombatants = useCallback(() => {
+    tracker.Encounter.Combatants().forEach(c => c.HasTakenTurn(false));
+  }, [tracker]);
+
   const combatantsPendingRemove = useSubscription(
     tracker.Encounter.CombatantsPendingRemove
   );
@@ -119,6 +133,8 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
         MoveCombatantFromDrag: moveCombatantFromDrag,
         SetCombatantColor: setCombatantColor,
         ToggleCombatantSpentReaction: toggleCombatantSpentReaction,
+        ToggleCombatantHasTakenTurn: toggleCombatantHasTakenTurn,
+        ResetHasTakenTurnForAllCombatants: resetHasTakenTurnForAllCombatants,
         CombatantsPendingRemove: combatantsPendingRemove,
         RestoreCombatants: tracker.CombatantCommander.RestoreCombatants,
         FlushCombatants:

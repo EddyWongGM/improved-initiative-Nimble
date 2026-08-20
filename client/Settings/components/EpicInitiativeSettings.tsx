@@ -158,7 +158,7 @@ function epicInitiativeFeatures() {
         <li>
           Customize the look and feel of your Player View with colors and CSS
         </li>
-        <li>Display Combatant Portraits and Encounter Background Images</li>
+        <li>Display Name Portraits and Encounter Background Images</li>
         <li>Players can suggest Tags for any combatant</li>
       </ul>
     </ul>

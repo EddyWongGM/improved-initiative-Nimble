@@ -16,7 +16,7 @@ export function SelectedCombatants(props: {
   if (selectedCombatants.length === 0) {
     return (
       <div className="selected-combatant">
-        <h2>No Combatant Selected</h2>
+        <h2>No Name Selected</h2>
       </div>
     );
   }
@@ -25,7 +25,7 @@ export function SelectedCombatants(props: {
     return (
       <div className="selected-combatant">
         <div className="combatant-details__header">
-          <h2>Selected Combatant</h2>
+          <h2>Selected Name</h2>
           <Button
             fontAwesomeIcon="times"
             onClick={combatantCommander.Deselect}
@@ -42,7 +42,7 @@ export function SelectedCombatants(props: {
     return (
       <div className="selected-combatant">
         <div className="combatant-details__header">
-          <h2>Selected Combatants</h2>
+          <h2>Selected Names</h2>
           <Button
             fontAwesomeIcon="times"
             onClick={combatantCommander.Deselect}

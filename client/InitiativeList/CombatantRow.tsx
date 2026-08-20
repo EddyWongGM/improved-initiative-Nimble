@@ -114,6 +114,19 @@ export function CombatantRow(props: CombatantRowProps) {
         align="left"
         aria-current={isActive ? "true" : "false"}
       >
+        <Tippy content="Has taken a turn this round">
+          <input
+            type="checkbox"
+            className="combatant__has-taken-turn"
+            checked={!!props.combatantState.HasTakenTurn}
+            onClick={e => e.stopPropagation()}
+            onChange={() =>
+              commandContext.ToggleCombatantHasTakenTurn(
+                props.combatantState.Id
+              )
+            }
+          />
+        </Tippy>
         {DisplayCombatantColor && (
           <CombatantColorPicker combatantState={props.combatantState} />
         )}

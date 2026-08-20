@@ -68,7 +68,7 @@ export class StatBlockEditor extends React.Component<
 
     const header =
       {
-        combatant: "Edit Combatant Statblock",
+        combatant: "Edit Name Statblock",
         library: "Edit Library Statblock",
         persistentcharacter: "Edit Character Statblock"
       }[this.props.editorTarget] || "Edit StatBlock";

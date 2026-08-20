@@ -4,6 +4,13 @@
   min-height: 6rem;
 }
 
+.initiative-list__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .combatants {
   border: 1px solid var(--accent-white);
   width: 100%;
@@ -244,10 +251,16 @@
 .combatant__name {
   width: 15%;
   grid-area: name;
+  padding-right: @large-spacer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   @media (max-width: @medium) {
     display: block;
     width: 100%;
+    padding-right: 0;
+    white-space: normal;
   }
 }
 
@@ -266,8 +279,19 @@
 }
 
 .combatant__hidden-icon,
-.combatant__color {
+.combatant__color,
+.combatant__has-taken-turn,
+.combatant__has-taken-turn-icon {
   margin-right: @medium-spacer;
+}
+
+.combatant__has-taken-turn {
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.combatant__has-taken-turn-icon {
+  color: var(--green, seagreen);
 }
 
 .combatant__hp {

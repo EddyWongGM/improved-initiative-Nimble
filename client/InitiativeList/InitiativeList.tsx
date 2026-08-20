@@ -2,7 +2,9 @@ import * as React from "react";
 
 import { CombatantState } from "../../common/CombatantState";
 import { EncounterState } from "../../common/EncounterState";
+import { Button } from "../Components/Button";
 import { CombatantRow } from "./CombatantRow";
+import { CommandContext } from "./CommandContext";
 import { InitiativeListHeader } from "./InitiativeListHeader";
 import { RestoreCombatants } from "./RestoreCombatants";
 
@@ -11,14 +13,25 @@ export function InitiativeList(props: {
   selectedCombatantIds: string[];
   combatantCountsByName: { [name: string]: number };
 }) {
+  const commandContext = React.useContext(CommandContext);
   const encounterState = props.encounterState;
   const showManaColumn = encounterState.Combatants.some(
     c => c.StatBlock.Mana
   );
+  const anyHasTakenTurn = encounterState.Combatants.some(c => c.HasTakenTurn);
 
   return (
     <div className="initiative-list">
-      <h2>Combatants by Initiative</h2>
+      <div className="initiative-list__header">
+        <h2>Names by Initiative</h2>
+        {anyHasTakenTurn && (
+          <Button
+            text="Reset Turns"
+            tooltip="Uncheck 'has taken turn' for everyone"
+            onClick={commandContext.ResetHasTakenTurnForAllCombatants}
+          />
+        )}
+      </div>
       <table className="combatants">
         <InitiativeListHeader
           encounterActive={encounterState.ActiveCombatantId != null}

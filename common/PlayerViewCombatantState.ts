@@ -14,4 +14,5 @@ export interface PlayerViewCombatantState {
   AC?: number;
   Color?: string;
   ReactionsSpent?: number;
+  HasTakenTurn?: boolean;
 }
