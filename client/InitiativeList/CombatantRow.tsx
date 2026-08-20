@@ -391,11 +391,7 @@ function getManaStyle(props: CombatantRowProps) {
   if (!maxMana) {
     return {};
   }
-  const currentMana = props.combatantState.CurrentMana ?? 0;
-  // Do not set green any higher, low value is needed for contrast against light background
-  const green = Math.floor((currentMana / maxMana) * 120);
-  const red = Math.floor(((maxMana - currentMana) / maxMana) * 170);
-  return { color: "rgb(" + red + "," + green + ",0)" };
+  return { color: "rgb(0,120,220)" };
 }
 
 function renderManaText(props: CombatantRowProps) {
