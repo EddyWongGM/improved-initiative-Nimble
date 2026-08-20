@@ -96,10 +96,10 @@ export function OptionsSettings(props: {
         </Info>
       </Toggle>
       <Toggle fieldName="TrackerView.DisplayHPBar">
-        Display HP Bar of Active or Selected Character
+        Display HP/Mana Bar of Active or Selected Character
         <Info>
-          Show a small HP bar indicator for any selected combatant(s), as well
-          as for the currently-active combatant.
+          Show a small HP and Mana bar indicator for any selected
+          combatant(s), as well as for the currently-active combatant.
         </Info>
       </Toggle>
       <Toggle fieldName="TrackerView.DisplayRestoreCombatants">
@@ -126,18 +126,19 @@ export function OptionsSettings(props: {
         fieldName="PlayerView.MonsterHPVerbosity"
         options={HpVerbosityOption}
       >
-        Creature and NPC HP Verbosity
+        Creature and NPC HP/Mana Verbosity
         <Info>
-          Control how much information about combatants is revealed in the
-          Player View window. Colored Label will change from green to red, so
-          keen-eyed players might deduce exact HP percentage.
+          Control how much information about combatants' HP and Mana is
+          revealed in the Player View window. Colored Label will change from
+          green to red, so keen-eyed players might deduce exact HP/Mana
+          percentage.
         </Info>
       </Dropdown>
       <Dropdown
         fieldName="PlayerView.PlayerHPVerbosity"
         options={HpVerbosityOption}
       >
-        Player Character HP Verbosity
+        Player Character HP/Mana Verbosity
       </Dropdown>
       <Toggle fieldName="PlayerView.HideMonstersOutsideEncounter">
         Don't show Creatures and NPCs in Player View until encounter is started

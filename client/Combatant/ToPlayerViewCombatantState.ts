@@ -109,10 +109,7 @@ function GetManaColor(combatant: Combatant): string | undefined {
   ) {
     return "auto";
   }
-  const currentMana = combatant.CurrentMana();
-  const green = Math.floor((currentMana / maxMana) * 170);
-  const red = Math.floor(((maxMana - currentMana) / maxMana) * 170);
-  return "rgb(" + red + "," + green + ",0)";
+  return "rgb(0,120,220)";
 }
 
 function GetHPColor(combatant: Combatant) {
