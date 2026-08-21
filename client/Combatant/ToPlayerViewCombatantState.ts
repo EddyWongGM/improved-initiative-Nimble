@@ -48,6 +48,12 @@ function GetIndexLabel(combatant: Combatant): number | undefined {
   if (combatant.Alias()) {
     return undefined;
   }
+  if (
+    CurrentSettings().Rules.AlwaysNumberMonsters &&
+    !combatant.IsPlayerCharacter()
+  ) {
+    return combatant.IndexLabel();
+  }
   const name = combatant.StatBlock().Name;
   const combatantCount = combatant.Encounter.CombatantCountsByName()[name];
   if (combatantCount > 1) {

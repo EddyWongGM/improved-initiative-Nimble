@@ -205,6 +205,28 @@ export class Combatant {
   }
 
   public UpdateIndexLabel(oldName?: string) {
+    if (
+      CurrentSettings().Rules.AlwaysNumberMonsters &&
+      !this.IsPlayerCharacter()
+    ) {
+      const otherMonsters = this.Encounter.Combatants().filter(
+        c => c !== this && !c.IsPlayerCharacter()
+      );
+      // A duplicated combatant inherits its source's IndexLabel, which
+      // collides with the still-present source - treat that the same as
+      // not having a label yet, so it gets its own number.
+      const collides = otherMonsters.some(
+        c => this.IndexLabel() && c.IndexLabel() === this.IndexLabel()
+      );
+      if (!this.IndexLabel() || collides) {
+        const existingMonsterIndices = otherMonsters.map(
+          c => c.IndexLabel() || 0
+        );
+        this.IndexLabel(Math.max(0, ...existingMonsterIndices) + 1);
+      }
+      return;
+    }
+
     const name = this.StatBlock().Name;
     const counts = this.Encounter.CombatantCountsByName();
     if (name == oldName) {
@@ -479,7 +501,10 @@ export class Combatant {
     if (alias) {
       return alias;
     }
-    if (combatantCount > 1) {
+    const alwaysNumberMonsters =
+      CurrentSettings().Rules.AlwaysNumberMonsters &&
+      !this.IsPlayerCharacter();
+    if (combatantCount > 1 || alwaysNumberMonsters) {
       return name + " " + index;
     }
 

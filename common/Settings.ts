@@ -38,6 +38,7 @@ export interface Settings {
     AutoCheckConcentration: boolean;
     AutoGroupInitiative: AutoGroupInitiativeOption;
     AutoRerollInitiative: AutoRerollInitiativeOption;
+    AlwaysNumberMonsters: boolean;
   };
   TrackerView: {
     DarkMode: boolean;
@@ -70,7 +71,8 @@ export function getDefaultSettings(): Settings {
       AllowNegativeHP: false,
       AutoCheckConcentration: true,
       AutoGroupInitiative: AutoGroupInitiativeOption.None,
-      AutoRerollInitiative: AutoRerollInitiativeOption.No
+      AutoRerollInitiative: AutoRerollInitiativeOption.No,
+      AlwaysNumberMonsters: false
     },
     TrackerView: {
       DarkMode: false,

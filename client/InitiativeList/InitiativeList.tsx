@@ -8,6 +8,7 @@ import { CombatantRow } from "./CombatantRow";
 import { CommandContext } from "./CommandContext";
 import { InitiativeListHeader } from "./InitiativeListHeader";
 import { RestoreCombatants } from "./RestoreCombatants";
+import { SettingsContext } from "../Settings/SettingsContext";
 
 export function InitiativeList(props: {
   encounterState: EncounterState<CombatantState>;
@@ -15,6 +16,8 @@ export function InitiativeList(props: {
   combatantCountsByName: { [name: string]: number };
 }) {
   const commandContext = React.useContext(CommandContext);
+  const settings = React.useContext(SettingsContext);
+  const alwaysNumberMonsters = settings.Rules.AlwaysNumberMonsters;
   const encounterState = props.encounterState;
   const showManaColumn = encounterState.Combatants.some(
     c => c.StatBlock.Mana
@@ -58,6 +61,9 @@ export function InitiativeList(props: {
           {encounterState.Combatants.map((combatantState, index) => {
             const siblingCount =
               props.combatantCountsByName[combatantState.StatBlock.Name] || 1;
+            const isMonster = !StatBlock.IsPlayerCharacter(
+              combatantState.StatBlock
+            );
 
             return (
               <CombatantRow
@@ -68,8 +74,11 @@ export function InitiativeList(props: {
                   id => id == combatantState.Id
                 )}
                 // Show index labels if the encounter has ever had more than one
-                // creature with this name.
-                showIndexLabel={siblingCount > 1}
+                // creature with this name, or if Creatures and NPCs are always
+                // numbered per settings.
+                showIndexLabel={
+                  siblingCount > 1 || (alwaysNumberMonsters && isMonster)
+                }
                 initiativeIndex={index}
                 showManaColumn={showManaColumn}
                 showResourcesColumn={showResourcesColumn}

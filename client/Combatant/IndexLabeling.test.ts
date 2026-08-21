@@ -94,4 +94,59 @@ describe("Index labeling", () => {
     expect(combatantDisplayNames).toContain("Goblin 2");
     expect(combatantDisplayNames).toContain("Goblin 1");
   });
+
+  describe("Rules.AlwaysNumberMonsters", () => {
+    beforeEach(() => {
+      InitializeTestSettings({ Rules: { AlwaysNumberMonsters: true } });
+    });
+
+    test("Monsters are numbered sequentially across different names, in the order added", () => {
+      const goblin = { ...StatBlock.Default(), Name: "Goblin" };
+      const zombie = { ...StatBlock.Default(), Name: "Zombie" };
+
+      const goblin1 = addCombatantFromStatBlock(encounter, goblin);
+      const goblin2 = addCombatantFromStatBlock(encounter, goblin);
+      const zombie1 = addCombatantFromStatBlock(encounter, zombie);
+      const zombie2 = addCombatantFromStatBlock(encounter, zombie);
+
+      expect(goblin1.DisplayName()).toEqual("Goblin 1");
+      expect(goblin2.DisplayName()).toEqual("Goblin 2");
+      expect(zombie1.DisplayName()).toEqual("Zombie 3");
+      expect(zombie2.DisplayName()).toEqual("Zombie 4");
+    });
+
+    test("Duplicating a monster (which copies its full saved state, including its IndexLabel) gives the copy its own number", () => {
+      const skeleton = { ...StatBlock.Default(), Name: "Skeleton" };
+      const original = addCombatantFromStatBlock(encounter, skeleton);
+
+      // Mirrors CombatantCommander.Duplicate: copies the source's full
+      // GetState(), IndexLabel included, onto a new combatant Id.
+      encounter.AddCombatantFromState({
+        ...original.GetState(),
+        Id: "duplicate-id"
+      });
+      const duplicate = encounter
+        .Combatants()
+        .find(c => c.Id === "duplicate-id");
+
+      expect(original.IndexLabel()).toEqual(1);
+      expect(duplicate.IndexLabel()).toEqual(2);
+    });
+
+    test("A lone monster is still numbered", () => {
+      const statBlock = { ...StatBlock.Default(), Name: "Goblin" };
+      const combatant = addCombatantFromStatBlock(encounter, statBlock);
+      expect(combatant.DisplayName()).toEqual("Goblin 1");
+    });
+
+    test("Player characters are not numbered", () => {
+      const statBlock = {
+        ...StatBlock.Default(),
+        Name: "Fenwick",
+        Player: "player"
+      };
+      const combatant = addCombatantFromStatBlock(encounter, statBlock);
+      expect(combatant.DisplayName()).toEqual("Fenwick");
+    });
+  });
 });

@@ -37,6 +37,15 @@ export function OptionsSettings(props: {
       <Toggle fieldName="Rules.AllowNegativeHP">
         Allow negative hit points
       </Toggle>
+      <Toggle fieldName="Rules.AlwaysNumberMonsters">
+        Always number Creatures and NPCs
+        <Info>
+          By default, a number only appears after a Name when there's more
+          than one Creature or NPC sharing it (e.g. "Goblin 2"). Enable this
+          to always number every Creature and NPC, based on the order they
+          were added to the encounter, even when its Name is unique.
+        </Info>
+      </Toggle>
       <Toggle fieldName="Rules.AutoCheckConcentration">
         Prompt for concentration checks
         <Info>
