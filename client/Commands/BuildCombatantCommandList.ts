@@ -39,6 +39,13 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
+    id: "apply-temporary-mana",
+    description: "Apply Temporary Mana",
+    actionBinding: c.AddTemporaryMana,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
     id: "spend-resources",
     description: "Spend Resources",
     actionBinding: c.SpendResources,
@@ -50,6 +57,13 @@ export const BuildCombatantCommandList: (
     description: "Restore Resources",
     actionBinding: c.RestoreResources,
     fontAwesomeIcon: "redo",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-resources",
+    description: "Apply Temporary Resources",
+    actionBinding: c.AddTemporaryResources,
+    fontAwesomeIcon: "medkit",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -67,6 +81,13 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
+    id: "apply-temporary-hit-dice",
+    description: "Apply Temporary Hit Dice",
+    actionBinding: c.AddTemporaryHitDice,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
     id: "spend-wounds",
     description: "Add Wounds",
     actionBinding: c.SpendWounds,
@@ -78,6 +99,13 @@ export const BuildCombatantCommandList: (
     description: "Heal Wounds",
     actionBinding: c.RestoreWounds,
     fontAwesomeIcon: "band-aid",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-wounds",
+    description: "Apply Wound Protection",
+    actionBinding: c.AddTemporaryWounds,
+    fontAwesomeIcon: "medkit",
     defaultShowOnActionBar: false
   }),
   new Command({

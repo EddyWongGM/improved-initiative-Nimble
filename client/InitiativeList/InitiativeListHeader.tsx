@@ -60,7 +60,7 @@ export function InitiativeListHeader(props: {
               className="fas fa-bolt"
               title="Resources"
               aria-hidden="true"
-              style={{ color: "rgb(30,150,60)" }}
+              style={{ color: "rgb(230,120,20)" }}
             ></span>
           </th>
         )}
@@ -72,7 +72,7 @@ export function InitiativeListHeader(props: {
               className="fas fa-dice-d6"
               title="Hit Dice"
               aria-hidden="true"
-              style={{ color: "rgb(230,120,20)" }}
+              style={{ color: "rgb(30,150,60)" }}
             ></span>
           </th>
         )}

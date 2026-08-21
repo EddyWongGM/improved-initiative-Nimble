@@ -65,6 +65,10 @@ export class Combatant {
   public PersistentCharacterId: string | null = null;
   public Alias = ko.observable("");
   public TemporaryHP = ko.observable(0);
+  public TemporaryMana = ko.observable(0);
+  public TemporaryResources = ko.observable(0);
+  public TemporaryHitDice = ko.observable(0);
+  public TemporaryWounds = ko.observable(0);
   public Tags = ko.observableArray<Tag>();
   public Initiative = ko.observable(0);
   public InitiativeGroup = ko.observable<string>(null);
@@ -116,6 +120,10 @@ export class Combatant {
     this.CurrentWounds(savedCombatant.CurrentWounds ?? 0);
     this.CurrentGold(savedCombatant.CurrentGold ?? 0);
     this.TemporaryHP(savedCombatant.TemporaryHP);
+    this.TemporaryMana(savedCombatant.TemporaryMana ?? 0);
+    this.TemporaryResources(savedCombatant.TemporaryResources ?? 0);
+    this.TemporaryHitDice(savedCombatant.TemporaryHitDice ?? 0);
+    this.TemporaryWounds(savedCombatant.TemporaryWounds ?? 0);
     this.Initiative(savedCombatant.Initiative);
     this.InitiativeGroup(
       savedCombatant.InitiativeGroup || this.InitiativeGroup()
@@ -318,7 +326,18 @@ export class Combatant {
 
   public ApplyManaChange(amount: number) {
     const maxMana = this.MaxMana() ?? 0;
-    let currentMana = this.CurrentMana() - amount;
+    let currentMana = this.CurrentMana();
+    let temporaryMana = this.TemporaryMana();
+
+    if (amount > 0) {
+      temporaryMana -= amount;
+      if (temporaryMana < 0) {
+        currentMana += temporaryMana;
+        temporaryMana = 0;
+      }
+    } else {
+      currentMana -= amount;
+    }
 
     if (currentMana < 0) {
       currentMana = 0;
@@ -328,11 +347,23 @@ export class Combatant {
     }
 
     this.CurrentMana(currentMana);
+    this.TemporaryMana(temporaryMana);
   }
 
   public ApplyResourcesChange(amount: number) {
     const maxResources = this.MaxResources() ?? 0;
-    let currentResources = this.CurrentResources() - amount;
+    let currentResources = this.CurrentResources();
+    let temporaryResources = this.TemporaryResources();
+
+    if (amount > 0) {
+      temporaryResources -= amount;
+      if (temporaryResources < 0) {
+        currentResources += temporaryResources;
+        temporaryResources = 0;
+      }
+    } else {
+      currentResources -= amount;
+    }
 
     if (currentResources < 0) {
       currentResources = 0;
@@ -342,11 +373,23 @@ export class Combatant {
     }
 
     this.CurrentResources(currentResources);
+    this.TemporaryResources(temporaryResources);
   }
 
   public ApplyHitDiceChange(amount: number) {
     const maxHitDice = this.MaxHitDice() ?? 0;
-    let currentHitDice = this.CurrentHitDice() - amount;
+    let currentHitDice = this.CurrentHitDice();
+    let temporaryHitDice = this.TemporaryHitDice();
+
+    if (amount > 0) {
+      temporaryHitDice -= amount;
+      if (temporaryHitDice < 0) {
+        currentHitDice += temporaryHitDice;
+        temporaryHitDice = 0;
+      }
+    } else {
+      currentHitDice -= amount;
+    }
 
     if (currentHitDice < 0) {
       currentHitDice = 0;
@@ -356,6 +399,7 @@ export class Combatant {
     }
 
     this.CurrentHitDice(currentHitDice);
+    this.TemporaryHitDice(temporaryHitDice);
   }
 
   public ApplyGoldChange(amount: number) {
@@ -370,7 +414,20 @@ export class Combatant {
 
   public ApplyWoundsChange(amount: number) {
     const maxWounds = this.MaxWounds() ?? 0;
-    let currentWounds = this.CurrentWounds() + amount;
+    let currentWounds = this.CurrentWounds();
+    let temporaryWounds = this.TemporaryWounds();
+
+    if (amount > 0) {
+      // Temporary Wounds act as protection: they absorb incoming wounds
+      // before the real Wounds count goes up.
+      temporaryWounds -= amount;
+      if (temporaryWounds < 0) {
+        currentWounds -= temporaryWounds;
+        temporaryWounds = 0;
+      }
+    } else {
+      currentWounds += amount;
+    }
 
     if (currentWounds < 0) {
       currentWounds = 0;
@@ -380,11 +437,36 @@ export class Combatant {
     }
 
     this.CurrentWounds(currentWounds);
+    this.TemporaryWounds(temporaryWounds);
   }
 
   public ApplyTemporaryHP(tempHP: number) {
     if (tempHP > this.TemporaryHP()) {
       this.TemporaryHP(tempHP);
+    }
+  }
+
+  public ApplyTemporaryMana(tempMana: number) {
+    if (tempMana > this.TemporaryMana()) {
+      this.TemporaryMana(tempMana);
+    }
+  }
+
+  public ApplyTemporaryResources(tempResources: number) {
+    if (tempResources > this.TemporaryResources()) {
+      this.TemporaryResources(tempResources);
+    }
+  }
+
+  public ApplyTemporaryHitDice(tempHitDice: number) {
+    if (tempHitDice > this.TemporaryHitDice()) {
+      this.TemporaryHitDice(tempHitDice);
+    }
+  }
+
+  public ApplyTemporaryWounds(tempWounds: number) {
+    if (tempWounds > this.TemporaryWounds()) {
+      this.TemporaryWounds(tempWounds);
     }
   }
 
@@ -411,9 +493,13 @@ export class Combatant {
       StatBlock: this.StatBlock(),
       CurrentHP: this.CurrentHP(),
       CurrentMana: this.CurrentMana(),
+      TemporaryMana: this.TemporaryMana(),
       CurrentResources: this.CurrentResources(),
+      TemporaryResources: this.TemporaryResources(),
       CurrentHitDice: this.CurrentHitDice(),
+      TemporaryHitDice: this.TemporaryHitDice(),
       CurrentWounds: this.CurrentWounds(),
+      TemporaryWounds: this.TemporaryWounds(),
       CurrentGold: this.CurrentGold(),
       CurrentNotes: this.CurrentNotes(),
       TemporaryHP: this.TemporaryHP(),

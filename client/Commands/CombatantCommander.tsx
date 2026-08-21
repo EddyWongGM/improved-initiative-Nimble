@@ -33,6 +33,10 @@ import { ShowDiceRollPrompt } from "../Prompts/RollDicePrompt";
 import { TagPrompt } from "../Prompts/TagPrompt";
 import { UpdateNotesPrompt } from "../Prompts/UpdateNotesPrompt";
 import { ApplyTemporaryHPPrompt } from "../Prompts/ApplyTemporaryHPPrompt";
+import { ApplyTemporaryManaPrompt } from "../Prompts/ApplyTemporaryManaPrompt";
+import { ApplyTemporaryResourcesPrompt } from "../Prompts/ApplyTemporaryResourcesPrompt";
+import { ApplyTemporaryHitDicePrompt } from "../Prompts/ApplyTemporaryHitDicePrompt";
+import { ApplyTemporaryWoundsPrompt } from "../Prompts/ApplyTemporaryWoundsPrompt";
 import { LinkInitiativePrompt } from "../Prompts/LinkInitiativePrompt";
 import { TextEnricherContext } from "../TextEnricher/TextEnricher";
 import { QuickEditStatBlockPrompt } from "../Prompts/QuickEditStatBlockPrompt";
@@ -292,6 +296,33 @@ export class CombatantCommander {
     this.tracker.PromptQueue.Add(prompt);
   };
 
+  public AddTemporaryMana = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryManaPrompt(combatantNames, model => {
+      if (model.manaAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryMana(model.manaAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.manaAmount} temporary mana granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryManaAdded, {
+          amount: model.manaAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
   private applyResourcesForCombatants(
     combatantViewModels: CombatantViewModel[]
   ) {
@@ -327,6 +358,33 @@ export class CombatantCommander {
       this.tracker.EventLog.LogResourcesChange
     );
     this.tracker.PromptQueue.Add(prompt);
+  };
+
+  public AddTemporaryResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryResourcesPrompt(combatantNames, model => {
+      if (model.resourcesAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryResources(model.resourcesAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.resourcesAmount} temporary resources granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryResourcesAdded, {
+          amount: model.resourcesAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
   };
 
   private applyHitDiceForCombatants(
@@ -366,6 +424,33 @@ export class CombatantCommander {
     this.tracker.PromptQueue.Add(prompt);
   };
 
+  public AddTemporaryHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryHitDicePrompt(combatantNames, model => {
+      if (model.hitDiceAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryHitDice(model.hitDiceAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.hitDiceAmount} temporary hit dice granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryHitDiceAdded, {
+          amount: model.hitDiceAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
   private applyWoundsForCombatants(combatantViewModels: CombatantViewModel[]) {
     const prompt = ApplyWoundsPrompt(
       combatantViewModels,
@@ -399,6 +484,33 @@ export class CombatantCommander {
       this.tracker.EventLog.LogWoundsChange
     );
     this.tracker.PromptQueue.Add(prompt);
+  };
+
+  public AddTemporaryWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryWoundsPrompt(combatantNames, model => {
+      if (model.woundsAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryWounds(model.woundsAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.woundsAmount} points of wound protection granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryWoundsAdded, {
+          amount: model.woundsAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
   };
 
   private applyGoldForCombatants(combatantViewModels: CombatantViewModel[]) {

@@ -115,7 +115,6 @@ export namespace StatBlock {
     Type: "",
     HP: { Value: 1, Notes: "(1d1+0)" },
     AC: { Value: 10, Notes: "" },
-    Wounds: { Value: 5, Notes: "" },
     InitiativeModifier: 0,
     InitiativeAdvantage: false,
     Speed: [],

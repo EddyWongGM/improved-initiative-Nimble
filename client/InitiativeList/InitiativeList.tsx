@@ -26,7 +26,7 @@ export function InitiativeList(props: {
     c => c.StatBlock.HitDice
   );
   const showWoundsColumn = encounterState.Combatants.some(
-    c => c.StatBlock.Wounds
+    c => c.StatBlock.Wounds && StatBlock.IsPlayerCharacter(c.StatBlock)
   );
   const showGoldColumn = encounterState.Combatants.some(c =>
     StatBlock.IsPlayerCharacter(c.StatBlock)

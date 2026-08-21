@@ -20,7 +20,7 @@ export const RestoreResourcesPrompt = (
     onSubmit: (model: RestoreResourcesModel) => {
       const restoreAmount = parseInt(model.restoreAmount);
       if (isNaN(restoreAmount)) {
-        return false;
+        return true;
       }
 
       logResourcesChange(-restoreAmount, combatantNames);

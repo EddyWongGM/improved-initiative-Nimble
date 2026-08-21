@@ -26,12 +26,12 @@ export const PlayerViewCombatantHeader = (props: {
     )}
     {props.resourcesColumnVisible && (
       <div className="combatant__resources">
-        <span className="fas fa-bolt" style={{ color: "rgb(30,150,60)" }} />
+        <span className="fas fa-bolt" style={{ color: "rgb(230,120,20)" }} />
       </div>
     )}
     {props.hitDiceColumnVisible && (
       <div className="combatant__hitdice">
-        <span className="fas fa-dice-d6" style={{ color: "rgb(230,120,20)" }} />
+        <span className="fas fa-dice-d6" style={{ color: "rgb(30,150,60)" }} />
       </div>
     )}
     {props.woundsColumnVisible && (

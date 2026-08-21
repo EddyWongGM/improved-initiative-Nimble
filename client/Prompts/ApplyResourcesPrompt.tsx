@@ -19,7 +19,7 @@ export const ApplyResourcesPrompt = (
     onSubmit: (model: ApplyResourcesModel) => {
       const resourcesAmount = parseInt(model.resourcesAmount);
       if (isNaN(resourcesAmount)) {
-        return false;
+        return true;
       }
 
       logResourcesChange(resourcesAmount, combatantNames);

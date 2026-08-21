@@ -20,7 +20,7 @@ export const RestoreWoundsPrompt = (
     onSubmit: (model: RestoreWoundsModel) => {
       const restoreAmount = parseInt(model.restoreAmount);
       if (isNaN(restoreAmount)) {
-        return false;
+        return true;
       }
 
       logWoundsChange(-restoreAmount, combatantNames);

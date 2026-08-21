@@ -20,7 +20,7 @@ export const SubtractGoldPrompt = (
     onSubmit: (model: SubtractGoldModel) => {
       const subtractAmount = parseInt(model.subtractAmount);
       if (isNaN(subtractAmount)) {
-        return false;
+        return true;
       }
 
       logGoldChange(-subtractAmount, combatantNames);

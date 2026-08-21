@@ -19,7 +19,7 @@ export const ApplyHitDicePrompt = (
     onSubmit: (model: ApplyHitDiceModel) => {
       const hitDiceAmount = parseInt(model.hitDiceAmount);
       if (isNaN(hitDiceAmount)) {
-        return false;
+        return true;
       }
 
       logHitDiceChange(hitDiceAmount, combatantNames);

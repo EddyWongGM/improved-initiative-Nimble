@@ -19,7 +19,7 @@ export const ApplyDamagePrompt = (
     onSubmit: (model: ApplyDamageModel) => {
       const damageAmount = parseInt(model.damageAmount);
       if (isNaN(damageAmount)) {
-        return false;
+        return true;
       }
 
       logHpChange(damageAmount, combatantNames);

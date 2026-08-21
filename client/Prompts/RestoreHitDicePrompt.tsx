@@ -20,7 +20,7 @@ export const RestoreHitDicePrompt = (
     onSubmit: (model: RestoreHitDiceModel) => {
       const restoreAmount = parseInt(model.restoreAmount);
       if (isNaN(restoreAmount)) {
-        return false;
+        return true;
       }
 
       logHitDiceChange(-restoreAmount, combatantNames);

@@ -20,7 +20,7 @@ export const ApplyHealingPrompt = (
     onSubmit: (model: ApplyHealingModel) => {
       const healingAmount = parseInt(model.healingAmount);
       if (isNaN(healingAmount)) {
-        return false;
+        return true;
       }
 
       const combatantNames = combatantViewModels.map(c => c.Name());

@@ -289,6 +289,7 @@ export function CombatantRow(props: CombatantRowProps) {
                 <span
                   className="combatant__mobile-icon fas fa-dice-d6"
                   aria-hidden="true"
+                  style={{ color: "rgb(30,150,60)" }}
                 />
 
                 {renderHitDiceText(props)}
@@ -318,7 +319,10 @@ export function CombatantRow(props: CombatantRowProps) {
 
       {props.showWoundsColumn && (
         <td className="combatant__wounds">
-          {props.combatantState.StatBlock.Wounds ? (
+          {props.combatantState.StatBlock.Wounds &&
+          StatBlockNamespace.IsPlayerCharacter(
+            props.combatantState.StatBlock
+          ) ? (
             <div
               className="combatant__wounds-outer"
               onClick={event => {
@@ -517,7 +521,8 @@ function CommandButton(props: { command: Command }) {
     <Tippy content={`${command.Description} [${command.KeyBinding}]`}>
       <button
         className={
-          "combatant__command-button fa-clickable" +
+          "combatant__command-button fa-clickable c-button--" +
+          command.Id +
           (isStackedIcon ? "" : " fa-" + fontAwesomeIcon)
         }
         onClick={command.ActionBinding}
@@ -597,6 +602,9 @@ function renderManaText(props: CombatantRowProps) {
   if (!maxMana) {
     return "";
   }
+  if (props.combatantState.TemporaryMana) {
+    return `${props.combatantState.CurrentMana ?? 0}+${props.combatantState.TemporaryMana}/${maxMana}`;
+  }
   return `${props.combatantState.CurrentMana ?? 0}/${maxMana}`;
 }
 
@@ -614,13 +622,16 @@ function getResourcesStyle(props: CombatantRowProps) {
   if (!maxResources) {
     return {};
   }
-  return { color: "rgb(30,150,60)" };
+  return { color: "rgb(230,120,20)" };
 }
 
 function renderResourcesText(props: CombatantRowProps) {
   const maxResources = props.combatantState.StatBlock.Resources?.Value;
   if (!maxResources) {
     return "";
+  }
+  if (props.combatantState.TemporaryResources) {
+    return `${props.combatantState.CurrentResources ?? 0}+${props.combatantState.TemporaryResources}/${maxResources}`;
   }
   return `${props.combatantState.CurrentResources ?? 0}/${maxResources}`;
 }
@@ -635,13 +646,16 @@ function renderResourcesBarStyle(props: CombatantRowProps) {
 }
 
 function getHitDiceStyle() {
-  return { color: "rgb(230,120,20)" };
+  return { color: "rgb(200,30,30)" };
 }
 
 function renderHitDiceText(props: CombatantRowProps) {
   const maxHitDice = props.combatantState.StatBlock.HitDice?.Value;
   if (!maxHitDice) {
     return "";
+  }
+  if (props.combatantState.TemporaryHitDice) {
+    return `${props.combatantState.CurrentHitDice ?? 0}+${props.combatantState.TemporaryHitDice}/${maxHitDice}`;
   }
   return `${props.combatantState.CurrentHitDice ?? 0}/${maxHitDice}`;
 }
@@ -675,6 +689,9 @@ function renderWoundsText(props: CombatantRowProps) {
   const maxWounds = props.combatantState.StatBlock.Wounds?.Value;
   if (!maxWounds) {
     return "";
+  }
+  if (props.combatantState.TemporaryWounds) {
+    return `${props.combatantState.CurrentWounds ?? 0}+${props.combatantState.TemporaryWounds}/${maxWounds}`;
   }
   return `${props.combatantState.CurrentWounds ?? 0}/${maxWounds}`;
 }

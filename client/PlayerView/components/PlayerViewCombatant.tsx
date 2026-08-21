@@ -44,7 +44,14 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
             )}
           </div>
         )}
-        <div className="combatant__name">
+        <div
+          className={
+            "combatant__name" +
+            (this.props.combatant.HasTakenTurn
+              ? " combatant__name--taken-turn"
+              : "")
+          }
+        >
           {this.props.combatant.Color && hasColor && (
             <span
               className="combatant__color fas fa-circle"

@@ -203,6 +203,38 @@ export class CombatantViewModel {
     this.Combatant.ApplyTemporaryHP(newTemporaryHP);
   }
 
+  public ApplyTemporaryMana(newTemporaryMana: number) {
+    if (isNaN(newTemporaryMana)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryMana(newTemporaryMana);
+  }
+
+  public ApplyTemporaryResources(newTemporaryResources: number) {
+    if (isNaN(newTemporaryResources)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryResources(newTemporaryResources);
+  }
+
+  public ApplyTemporaryHitDice(newTemporaryHitDice: number) {
+    if (isNaN(newTemporaryHitDice)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryHitDice(newTemporaryHitDice);
+  }
+
+  public ApplyTemporaryWounds(newTemporaryWounds: number) {
+    if (isNaN(newTemporaryWounds)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryWounds(newTemporaryWounds);
+  }
+
   public ApplyInitiative(initiative: number) {
     this.Combatant.Initiative(initiative);
     this.Combatant.Encounter.SortByInitiative(true);

@@ -15,10 +15,14 @@ export interface CombatantState {
   PersistentCharacterId?: string;
   CurrentHP: number;
   CurrentMana?: number;
+  TemporaryMana?: number;
   CurrentResources?: number;
+  TemporaryResources?: number;
   CurrentHitDice?: number;
+  TemporaryHitDice?: number;
   RevealedHitDice?: boolean;
   CurrentWounds?: number;
+  TemporaryWounds?: number;
   CurrentGold?: number;
   RevealedGold?: boolean;
   CurrentNotes?: string;

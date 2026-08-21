@@ -49,6 +49,69 @@ describe("Combatant", () => {
     expect(combatantsSpy).toBeCalled();
   });
 
+  describe("Temporary resource pools", () => {
+    test("ApplyTemporaryMana does not stack, takes the higher value", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Mana: { Value: 10, Notes: "" }
+      });
+
+      combatant.ApplyTemporaryMana(5);
+      combatant.ApplyTemporaryMana(3);
+      expect(combatant.TemporaryMana()).toBe(5);
+
+      combatant.ApplyTemporaryMana(8);
+      expect(combatant.TemporaryMana()).toBe(8);
+    });
+
+    test("ApplyManaChange spends from TemporaryMana first, then spills over", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Mana: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentMana(10);
+      combatant.ApplyTemporaryMana(5);
+
+      combatant.ApplyManaChange(3);
+      expect(combatant.TemporaryMana()).toBe(2);
+      expect(combatant.CurrentMana()).toBe(10);
+
+      combatant.ApplyManaChange(6);
+      expect(combatant.TemporaryMana()).toBe(0);
+      expect(combatant.CurrentMana()).toBe(6);
+    });
+
+    test("ApplyManaChange restoring mana does not touch TemporaryMana", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Mana: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentMana(4);
+      combatant.ApplyTemporaryMana(5);
+
+      combatant.ApplyManaChange(-3);
+      expect(combatant.TemporaryMana()).toBe(5);
+      expect(combatant.CurrentMana()).toBe(7);
+    });
+
+    test("ApplyWoundsChange absorbs incoming wounds into TemporaryWounds before CurrentWounds rises", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        Wounds: { Value: 5, Notes: "" }
+      });
+      combatant.ApplyTemporaryWounds(3);
+
+      combatant.ApplyWoundsChange(2);
+      expect(combatant.TemporaryWounds()).toBe(1);
+      expect(combatant.CurrentWounds()).toBe(0);
+
+      combatant.ApplyWoundsChange(2);
+      expect(combatant.TemporaryWounds()).toBe(0);
+      expect(combatant.CurrentWounds()).toBe(1);
+    });
+  });
+
   describe("ToPlayerViewCombatantState", () => {
     test("Should show full HP for player characters", () => {
       const combatant = addCombatantFromStatBlock(encounter, {

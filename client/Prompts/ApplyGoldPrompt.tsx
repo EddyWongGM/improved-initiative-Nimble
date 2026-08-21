@@ -19,7 +19,7 @@ export const ApplyGoldPrompt = (
     onSubmit: (model: ApplyGoldModel) => {
       const goldAmount = parseInt(model.goldAmount);
       if (isNaN(goldAmount)) {
-        return false;
+        return true;
       }
 
       logGoldChange(goldAmount, combatantNames);

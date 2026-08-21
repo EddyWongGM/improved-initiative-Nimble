@@ -19,7 +19,7 @@ export const ApplyWoundsPrompt = (
     onSubmit: (model: ApplyWoundsModel) => {
       const woundsAmount = parseInt(model.woundsAmount);
       if (isNaN(woundsAmount)) {
-        return false;
+        return true;
       }
 
       logWoundsChange(woundsAmount, combatantNames);

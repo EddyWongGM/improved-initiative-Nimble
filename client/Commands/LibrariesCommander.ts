@@ -269,7 +269,8 @@ export class LibrariesCommander {
       concatenatedStringRegex(
         this.libraries.Spells.GetAllListings() //TODO: Ensure that computed is updated with this
           .map(s => s.Meta().Name)
-          .filter(n => n.length > 2)
+          .filter(n => n.length > 2),
+        { caseSensitive: true }
       )
   );
 

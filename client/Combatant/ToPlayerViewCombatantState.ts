@@ -83,8 +83,12 @@ function GetManaDisplay(combatant: Combatant): string | undefined {
     ? CurrentSettings().PlayerView.PlayerHPVerbosity
     : CurrentSettings().PlayerView.MonsterHPVerbosity;
   const currentMana = combatant.CurrentMana();
+  const temporaryMana = combatant.TemporaryMana();
   if (manaVerbosity == "Actual HP") {
     // Show current only - the max is DM-only information.
+    if (temporaryMana) {
+      return `${currentMana}+${temporaryMana}`;
+    }
     return `${currentMana}`;
   }
   if (manaVerbosity == "Hide All") {
@@ -132,8 +136,12 @@ function GetResourcesDisplay(combatant: Combatant): string | undefined {
     ? CurrentSettings().PlayerView.PlayerHPVerbosity
     : CurrentSettings().PlayerView.MonsterHPVerbosity;
   const currentResources = combatant.CurrentResources();
+  const temporaryResources = combatant.TemporaryResources();
   if (resourcesVerbosity == "Actual HP") {
     // Show current only - the max is DM-only information.
+    if (temporaryResources) {
+      return `${currentResources}+${temporaryResources}`;
+    }
     return `${currentResources}`;
   }
   if (resourcesVerbosity == "Hide All") {
@@ -168,7 +176,7 @@ function GetResourcesColor(combatant: Combatant): string | undefined {
   ) {
     return "auto";
   }
-  return "rgb(30,150,60)";
+  return "rgb(230,120,20)";
 }
 
 function GetHitDiceDisplay(combatant: Combatant): string | undefined {
@@ -185,9 +193,13 @@ function GetHitDiceDisplay(combatant: Combatant): string | undefined {
   }
 
   const hitDiceVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  const temporaryHitDice = combatant.TemporaryHitDice();
   if (hitDiceVerbosity == "Actual HP") {
     // Show the delta from max (e.g. "-1"), not the raw count - the max
     // itself is DM-only information.
+    if (temporaryHitDice) {
+      return `${currentHitDice - maxHitDice}+${temporaryHitDice}`;
+    }
     return (currentHitDice - maxHitDice).toString();
   }
   if (hitDiceVerbosity == "Hide All") {
@@ -225,7 +237,7 @@ function GetHitDiceColor(combatant: Combatant): string | undefined {
   ) {
     return "auto";
   }
-  return "rgb(230,120,20)";
+  return "rgb(200,30,30)";
 }
 
 function GetWoundsDisplay(combatant: Combatant): string | undefined {
@@ -238,8 +250,12 @@ function GetWoundsDisplay(combatant: Combatant): string | undefined {
   }
 
   const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  const temporaryWounds = combatant.TemporaryWounds();
   if (woundsVerbosity == "Actual HP") {
     // Show current only - the max is DM-only information.
+    if (temporaryWounds) {
+      return `${currentWounds}+${temporaryWounds}`;
+    }
     return `${currentWounds}`;
   }
   if (woundsVerbosity == "Hide All") {
