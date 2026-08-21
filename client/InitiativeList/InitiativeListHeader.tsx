@@ -4,7 +4,9 @@ import { SettingsContext } from "../Settings/SettingsContext";
 export function InitiativeListHeader(props: {
   encounterActive: boolean;
   showManaColumn: boolean;
+  showResourcesColumn: boolean;
   showWoundsColumn: boolean;
+  showGoldColumn: boolean;
 }) {
   const settings = React.useContext(SettingsContext);
 
@@ -39,6 +41,17 @@ export function InitiativeListHeader(props: {
           </th>
         )}
 
+        {props.showResourcesColumn && (
+          <th className="combatant__resources">
+            <span className="screen-reader-only">Resources</span>
+            <span
+              className="fas fa-bolt"
+              title="Resources"
+              aria-hidden="true"
+            ></span>
+          </th>
+        )}
+
         {props.showWoundsColumn && (
           <th className="combatant__wounds">
             <span className="screen-reader-only">Wounds</span>
@@ -58,6 +71,17 @@ export function InitiativeListHeader(props: {
             aria-hidden="true"
           ></span>
         </th>
+
+        {props.showGoldColumn && (
+          <th className="combatant__gold">
+            <span className="screen-reader-only">Gold</span>
+            <span
+              className="fas fa-coins"
+              title="Gold"
+              aria-hidden="true"
+            ></span>
+          </th>
+        )}
 
         {settings.StatBlock.CustomFields.filter(f => f.showInEncounterView).map(
           (field, index) => (

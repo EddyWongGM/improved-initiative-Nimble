@@ -93,7 +93,9 @@
 
   .combatant .combatant__hp-outer,
   .combatant .combatant__mana-outer,
-  .combatant .combatant__wounds-outer {
+  .combatant .combatant__resources-outer,
+  .combatant .combatant__wounds-outer,
+  .combatant .combatant__gold-outer {
     transition: box-shadow @transition-hover;
     &:hover {
       box-shadow: 0 0 0 2px var(--hover-hp-red);
@@ -132,6 +134,7 @@
 .combatant.selected,
 .combatant__hp:hover,
 .combatant__mana:hover,
+.combatant__resources:hover,
 .combatant__wounds:hover {
   .combatant__hp-bar {
     opacity: 1;
@@ -175,10 +178,10 @@
     display: grid;
     /* prettier-ignore */
     grid-template:
-      "leftgutter image name           mana         wounds   ac       hp"
-      "leftgutter image divider        divider      divider  divider  divider"
-      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands" /
-       auto auto  minmax(0, 1fr) auto     auto     auto     auto;
+      "leftgutter image name           mana         resources wounds   ac       hp       gold"
+      "leftgutter image divider        divider      divider   divider  divider  divider  divider"
+      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands" /
+       auto auto  minmax(0, 1fr) auto     auto      auto     auto     auto     auto;
 
     &::before {
       content: "";
@@ -333,10 +336,35 @@
   }
 }
 
+.combatant__resources {
+  width: 4rem;
+  justify-content: center;
+  grid-area: resources;
+
+  @media (max-width: @medium) {
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+  }
+}
+
 .combatant__wounds {
   width: 4rem;
   justify-content: center;
   grid-area: wounds;
+
+  @media (max-width: @medium) {
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+  }
+}
+
+.combatant__gold {
+  width: 3.5rem;
+  justify-content: center;
+  grid-area: gold;
+  position: relative;
 
   @media (max-width: @medium) {
     display: flex;
@@ -353,6 +381,12 @@
   @media (max-width: @medium) {
     top: -4px;
   }
+}
+
+.combatant__gold--hidden-badge {
+  font-size: 80%;
+  margin-left: @extra-small-spacer;
+  color: var(--text-faded);
 }
 .combatant__tags-commands-cell {
   grid-area: tagsCommands;

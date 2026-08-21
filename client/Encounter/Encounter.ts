@@ -204,6 +204,7 @@ export class Encounter {
         TemporaryHP: 0,
         Hidden: hideOnAdd,
         RevealedAC: false,
+        RevealedGold: true,
         Initiative: 0,
         Tags: [],
         RoundCounter: 0,
@@ -244,13 +245,16 @@ export class Encounter {
       IndexLabel: null,
       CurrentHP: persistentCharacter.CurrentHP,
       CurrentMana: persistentCharacter.CurrentMana,
+      CurrentResources: persistentCharacter.CurrentResources,
       CurrentWounds: persistentCharacter.CurrentWounds,
+      CurrentGold: persistentCharacter.CurrentGold,
       CurrentNotes: persistentCharacter.Notes,
       TemporaryHP: 0,
       Hidden: hideOnAdd,
       RevealedAC: false,
+      RevealedGold: true,
       Initiative: initiativeValue,
-      Tags: [],
+      Tags: persistentCharacter.Tags ?? [],
       RoundCounter: 0,
       ElapsedSeconds: 0,
       InterfaceVersion: persistentCharacter.Version
@@ -451,7 +455,11 @@ export class Encounter {
         combatant.CurrentMana(
           persistentCharacter.CurrentMana ?? combatant.MaxMana() ?? 0
         );
+        combatant.CurrentResources(
+          persistentCharacter.CurrentResources ?? combatant.MaxResources() ?? 0
+        );
         combatant.CurrentWounds(persistentCharacter.CurrentWounds ?? 0);
+        combatant.CurrentGold(persistentCharacter.CurrentGold ?? 0);
         combatant.CurrentNotes(persistentCharacter.Notes);
         combatant.AttachToPersistentCharacterLibrary(updatePersistentCharacter);
       }

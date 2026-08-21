@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { CombatantState } from "../../common/CombatantState";
 import { EncounterState } from "../../common/EncounterState";
+import { StatBlock } from "../../common/StatBlock";
 import { Button } from "../Components/Button";
 import { CombatantRow } from "./CombatantRow";
 import { CommandContext } from "./CommandContext";
@@ -18,8 +19,14 @@ export function InitiativeList(props: {
   const showManaColumn = encounterState.Combatants.some(
     c => c.StatBlock.Mana
   );
+  const showResourcesColumn = encounterState.Combatants.some(
+    c => c.StatBlock.Resources
+  );
   const showWoundsColumn = encounterState.Combatants.some(
     c => c.StatBlock.Wounds
+  );
+  const showGoldColumn = encounterState.Combatants.some(c =>
+    StatBlock.IsPlayerCharacter(c.StatBlock)
   );
   const anyHasTakenTurn = encounterState.Combatants.some(c => c.HasTakenTurn);
 
@@ -39,7 +46,9 @@ export function InitiativeList(props: {
         <InitiativeListHeader
           encounterActive={encounterState.ActiveCombatantId != null}
           showManaColumn={showManaColumn}
+          showResourcesColumn={showResourcesColumn}
           showWoundsColumn={showWoundsColumn}
+          showGoldColumn={showGoldColumn}
         />
         <tbody>
           {encounterState.Combatants.map((combatantState, index) => {
@@ -59,7 +68,9 @@ export function InitiativeList(props: {
                 showIndexLabel={siblingCount > 1}
                 initiativeIndex={index}
                 showManaColumn={showManaColumn}
+                showResourcesColumn={showResourcesColumn}
                 showWoundsColumn={showWoundsColumn}
+                showGoldColumn={showGoldColumn}
               />
             );
           })}

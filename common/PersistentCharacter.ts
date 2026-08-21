@@ -1,6 +1,7 @@
 import { now } from "moment";
 import { StatBlock } from "./StatBlock";
 import { probablyUniqueString } from "./Toolbox";
+import { TagState } from "./CombatantState";
 
 export interface PersistentCharacter {
   Id: string;
@@ -10,9 +11,12 @@ export interface PersistentCharacter {
   LastUpdateMs: number;
   CurrentHP: number;
   CurrentMana?: number;
+  CurrentResources?: number;
   CurrentWounds?: number;
+  CurrentGold?: number;
   StatBlock: StatBlock;
   Notes: string;
+  Tags?: TagState[];
 }
 
 export namespace PersistentCharacter {
@@ -25,9 +29,12 @@ export namespace PersistentCharacter {
       LastUpdateMs: now(),
       CurrentHP: statBlock.HP.Value,
       CurrentMana: statBlock.Mana?.Value,
+      CurrentResources: statBlock.Resources?.Value,
       CurrentWounds: statBlock.Wounds ? 0 : undefined,
+      CurrentGold: 0,
       StatBlock: statBlock,
-      Notes: ""
+      Notes: "",
+      Tags: []
     };
   }
 

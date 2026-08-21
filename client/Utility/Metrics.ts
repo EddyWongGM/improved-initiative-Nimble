@@ -16,6 +16,8 @@ enum MetricEvent {
   CombatantAcRevealed = "combatant_ac_revealed",
   CombatantAdded = "combatant_added",
   CombatantDefeated = "combatant_defeated",
+  CombatantGoldHidden = "combatant_gold_hidden",
+  CombatantGoldRevealed = "combatant_gold_revealed",
   CombatantHidden = "combatant_hidden",
   CombatantQuickAdded = "combatant_quick_added",
   CombatantRevealed = "combatant_revealed",

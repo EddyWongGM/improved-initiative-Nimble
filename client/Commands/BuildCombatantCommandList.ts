@@ -39,6 +39,20 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
+    id: "spend-resources",
+    description: "Spend Resources",
+    actionBinding: c.SpendResources,
+    fontAwesomeIcon: "bolt",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-resources",
+    description: "Restore Resources",
+    actionBinding: c.RestoreResources,
+    fontAwesomeIcon: "redo",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
     id: "spend-wounds",
     description: "Add Wounds",
     actionBinding: c.SpendWounds,
@@ -50,6 +64,20 @@ export const BuildCombatantCommandList: (
     description: "Heal Wounds",
     actionBinding: c.RestoreWounds,
     fontAwesomeIcon: "band-aid",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "add-gold",
+    description: "Add Gold",
+    actionBinding: c.AddGold,
+    fontAwesomeIcon: "hand-holding-usd",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "subtract-gold",
+    description: "Subtract Gold",
+    actionBinding: c.SubtractGold,
+    fontAwesomeIcon: "coins",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -99,6 +127,13 @@ export const BuildCombatantCommandList: (
     description: "Reveal/Hide AC in Player View",
     actionBinding: c.ToggleRevealedAC,
     fontAwesomeIcon: "shield-alt",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "toggle-reveal-gold",
+    description: "Hide/Reveal Gold in Player View",
+    actionBinding: c.ToggleRevealedGold,
+    fontAwesomeIcon: "coins",
     defaultShowOnActionBar: false
   }),
   new Command({

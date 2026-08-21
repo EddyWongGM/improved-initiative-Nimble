@@ -14,6 +14,9 @@ function updateLegacySavedCombatant(savedCombatant: any) {
   if (!savedCombatant.RevealedAC) {
     savedCombatant.RevealedAC = false;
   }
+  if (savedCombatant.RevealedGold === undefined) {
+    savedCombatant.RevealedGold = true;
+  }
   if (savedCombatant.MaxHP) {
     savedCombatant.StatBlock.HP.Value = savedCombatant.MaxHP;
   }

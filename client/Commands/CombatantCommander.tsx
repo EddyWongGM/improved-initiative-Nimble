@@ -20,8 +20,12 @@ import { ApplyDamagePrompt } from "../Prompts/ApplyDamagePrompt";
 import { ApplyHealingPrompt } from "../Prompts/ApplyHealingPrompt";
 import { ApplyManaPrompt } from "../Prompts/ApplyManaPrompt";
 import { RestoreManaPrompt } from "../Prompts/RestoreManaPrompt";
+import { ApplyResourcesPrompt } from "../Prompts/ApplyResourcesPrompt";
+import { RestoreResourcesPrompt } from "../Prompts/RestoreResourcesPrompt";
 import { ApplyWoundsPrompt } from "../Prompts/ApplyWoundsPrompt";
 import { RestoreWoundsPrompt } from "../Prompts/RestoreWoundsPrompt";
+import { ApplyGoldPrompt } from "../Prompts/ApplyGoldPrompt";
+import { SubtractGoldPrompt } from "../Prompts/SubtractGoldPrompt";
 import { ConcentrationPrompt } from "../Prompts/ConcentrationPrompt";
 import { ShowDiceRollPrompt } from "../Prompts/RollDicePrompt";
 import { TagPrompt } from "../Prompts/TagPrompt";
@@ -286,6 +290,43 @@ export class CombatantCommander {
     this.tracker.PromptQueue.Add(prompt);
   };
 
+  private applyResourcesForCombatants(
+    combatantViewModels: CombatantViewModel[]
+  ) {
+    const prompt = ApplyResourcesPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogResourcesChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyResourcesForCombatants(selectedCombatants);
+  };
+
+  public SpendResourcesTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyResourcesForCombatants([combatantViewModel]);
+  };
+
+  public RestoreResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreResourcesPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogResourcesChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
   private applyWoundsForCombatants(combatantViewModels: CombatantViewModel[]) {
     const prompt = ApplyWoundsPrompt(
       combatantViewModels,
@@ -317,6 +358,41 @@ export class CombatantCommander {
       selectedCombatants,
       "",
       this.tracker.EventLog.LogWoundsChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
+  private applyGoldForCombatants(combatantViewModels: CombatantViewModel[]) {
+    const prompt = ApplyGoldPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogGoldChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public AddGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyGoldForCombatants(selectedCombatants);
+  };
+
+  public AddGoldTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyGoldForCombatants([combatantViewModel]);
+  };
+
+  public SubtractGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = SubtractGoldPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogGoldChange
     );
     this.tracker.PromptQueue.Add(prompt);
   };
@@ -537,6 +613,14 @@ export class CombatantCommander {
     }
 
     this.SelectedCombatants().forEach(c => c.ToggleRevealedAC());
+  };
+
+  public ToggleRevealedGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedGold());
   };
 
   public EditOwnStatBlock = () => {

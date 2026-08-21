@@ -36,6 +36,7 @@ export interface StatBlock extends Listable {
   HP: ValueAndNotes;
   AC: ValueAndNotes;
   Mana?: ValueAndNotes;
+  Resources?: ValueAndNotes;
   Wounds?: ValueAndNotes;
   Speed: string[];
   Abilities: AbilityScores;

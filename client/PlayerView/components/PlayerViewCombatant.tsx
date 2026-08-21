@@ -9,7 +9,9 @@ interface PlayerViewCombatantProps {
   portraitColumnVisible: boolean;
   acColumnVisible: boolean;
   manaColumnVisible: boolean;
+  resourcesColumnVisible: boolean;
   woundsColumnVisible: boolean;
+  goldColumnVisible: boolean;
   reactionTrackerVisible: boolean;
   colorVisible: boolean;
   areSuggestionsAllowed: boolean;
@@ -76,6 +78,16 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
             />
           </div>
         )}
+        {this.props.resourcesColumnVisible && (
+          <div className="combatant__resources">
+            <span
+              style={{ color: this.props.combatant.ResourcesColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.ResourcesDisplay || ""
+              }}
+            />
+          </div>
+        )}
         {this.props.woundsColumnVisible && (
           <div className="combatant__wounds">
             <span
@@ -88,6 +100,11 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
         )}
         {this.props.acColumnVisible && (
           <div className="combatant__ac">{this.props.combatant.AC || ""}</div>
+        )}
+        {this.props.goldColumnVisible && (
+          <div className="combatant__gold">
+            {this.props.combatant.GoldDisplay || ""}
+          </div>
         )}
         <div className="combatant__tags">
           {this.props.combatant.Tags.map((tag, index) => (

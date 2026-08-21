@@ -28,6 +28,7 @@
 }
 
 .c-combatant-details__hp,
+.c-combatant-details__resources-wounds,
 .c-combatant-details__tags {
   flex-direction: row;
   margin-top: @extra-small-spacer;
@@ -35,8 +36,13 @@
 
 .c-combatant-details__hp {
   .stat-label.Mana,
-  .stat-label.Wounds,
   .stat-label.Level {
+    margin-left: @medium-spacer;
+  }
+}
+
+.c-combatant-details__resources-wounds {
+  .stat-label.Wounds {
     margin-left: @medium-spacer;
   }
 }

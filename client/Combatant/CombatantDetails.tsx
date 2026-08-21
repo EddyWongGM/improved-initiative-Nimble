@@ -26,6 +26,10 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
   const currentManaPercentage = useSubscription(
     props.combatantViewModel.ManaPercentage
   );
+  const currentResources = useSubscription(props.combatantViewModel.Resources);
+  const currentResourcesPercentage = useSubscription(
+    props.combatantViewModel.ResourcesPercentage
+  );
   const currentWounds = useSubscription(props.combatantViewModel.Wounds);
   const currentWoundsPercentage = useSubscription(
     props.combatantViewModel.WoundsPercentage
@@ -89,22 +93,6 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
             </span>
           </>
         )}
-        {currentWounds && (
-          <>
-            <span className="stat-label Wounds">Wounds</span>
-            <span>
-              {currentWounds}
-              {DisplayHPBar && (
-                <span className="combatant__hp-bar">
-                  <span
-                    className="combatant__hp-bar--filled"
-                    style={renderHPBarStyle(currentWoundsPercentage)}
-                  />
-                </span>
-              )}
-            </span>
-          </>
-        )}
         {statBlock.Challenge && (
           <>
             <span className="stat-label Level">
@@ -114,6 +102,42 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
           </>
         )}
       </div>
+      {(currentResources || currentWounds) && (
+        <div className="c-combatant-details__resources-wounds">
+          {currentResources && (
+            <>
+              <span className="stat-label Resources">Resources</span>
+              <span>
+                {currentResources}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentResourcesPercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+          {currentWounds && (
+            <>
+              <span className="stat-label Wounds">Wounds</span>
+              <span>
+                {currentWounds}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentWoundsPercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+      )}
       <div className="HP AC speed Challenge">
         <span className="stat-label">Defense</span>
         <span className="stat-value">{statBlock.AC.Value}</span>

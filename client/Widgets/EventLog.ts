@@ -25,12 +25,30 @@ export class EventLog {
     }
   };
 
+  public LogResourcesChange = (amount: number, combatantNames: string) => {
+    if (amount > 0) {
+      this.AddEvent(`${amount} resources spent by ${combatantNames}.`);
+    }
+    if (amount < 0) {
+      this.AddEvent(`${-amount} resources restored to ${combatantNames}.`);
+    }
+  };
+
   public LogWoundsChange = (amount: number, combatantNames: string) => {
     if (amount > 0) {
       this.AddEvent(`${amount} wounds added to ${combatantNames}.`);
     }
     if (amount < 0) {
       this.AddEvent(`${-amount} wounds healed for ${combatantNames}.`);
+    }
+  };
+
+  public LogGoldChange = (amount: number, combatantNames: string) => {
+    if (amount > 0) {
+      this.AddEvent(`${amount} gold added for ${combatantNames}.`);
+    }
+    if (amount < 0) {
+      this.AddEvent(`${-amount} gold subtracted from ${combatantNames}.`);
     }
   };
 }

@@ -192,6 +192,7 @@ export class StatBlockEditor extends React.Component<
           <ValueAndNotesField label="Hit Points" fieldName="HP" />
           <ValueAndNotesField label="Defense" fieldName="AC" />
           <ValueAndNotesField label="Mana" fieldName="Mana" />
+          <ValueAndNotesField label="Resources" fieldName="Resources" />
           {this.props.statBlock.Player == "player" && (
             <ValueAndNotesField label="Wounds" fieldName="Wounds" />
           )}

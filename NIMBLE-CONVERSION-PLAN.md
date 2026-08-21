@@ -1,7 +1,5 @@
 to do
 
-Resources
-Gold
 Inventory
 
 ## Mana — implementation log (done)
@@ -199,3 +197,352 @@ so healing still correctly decreases current wounds with the corrected sign.
 Not built, matching what Mana also skipped: a "temporary wounds" equivalent,
 and a Wounds-specific verbosity setting independent of `PlayerHPVerbosity`.
 
+## Resources — implementation log (done)
+
+A third resource pool, alongside HP/Mana/Wounds. Decisions confirmed before
+drafting this plan:
+
+- **Optional on any stat block, like Mana** — not gated to player characters.
+  Any creature (PC or monster) can have a `Resources` field; the UI only shows
+  it when that specific stat block has one set.
+- **Starts full (current = max), like HP/Mana** — not the Wounds convention.
+  A fresh combatant's current Resources equals its max, and there's no
+  preset default number (unlike Wounds' default max of 5) — the DM sets a max
+  per stat block, same as HP/AC/Mana.
+- **Same up/down semantics as HP/Mana**, not Wounds — a positive "spend" input
+  decreases current, a positive "restore" input increases current
+  (`CurrentResources() - amount`, matching `ApplyManaChange`, *not* the
+  `+ amount` fix that Wounds needed — that fix was specifically because
+  Wounds is a "damage taken" counter, and Resources isn't).
+
+- **Column order: HP, Mana, Resources, Wounds** — Resources sits between Mana
+  and Wounds everywhere the three appear side-by-side (initiative list header
+  and row, combatant details panel, Player View header and row), not appended
+  after Wounds. Affects the JSX ordering in each file below, and the grid-area
+  order in `combatants.less`'s mobile `grid-template`.
+
+Given those three decisions, this is a near-exact clone of the Mana build —
+same file list, same layering, same PC/monster-agnostic gating. Proposed
+naming: field `Resources: ValueAndNotes` (label "Resources" in the editor),
+`CurrentResources`/`MaxResources` on the combatant, commands "Spend
+Resources"/"Restore Resources", icon `bolt` (spend) / `redo` (restore) —
+distinct from Mana's `hat-wizard`/`star` and Wounds' `skull-crossbones`/
+`band-aid`. Naming is a placeholder; confirm before implementing since it's
+visible in the UI (stat block editor label, column header, command tooltips).
+
+Planned file list (mirrors the "Mana — implementation log" section above 1:1,
+swapping `Mana`→`Resources` throughout):
+
+1. **Data model** — `Resources?: ValueAndNotes` on `StatBlock`
+   ([common/StatBlock.ts](common/StatBlock.ts)); `CurrentResources?: number` on
+   `CombatantState` ([common/CombatantState.ts](common/CombatantState.ts)) and
+   `PersistentCharacter` ([common/PersistentCharacter.ts](common/PersistentCharacter.ts));
+   `ResourcesDisplay?`/`ResourcesColor?` on `PlayerViewCombatantState`
+   ([common/PlayerViewCombatantState.ts](common/PlayerViewCombatantState.ts)).
+2. **Stat block editor/display** — `ValueAndNotesField` in
+   [StatBlockEditor.tsx](client/StatBlockEditor/StatBlockEditor.tsx) (no PC gate,
+   unlike Wounds), numeric coercion in
+   [ConvertStringsToNumbersWhereNeeded.tsx](client/StatBlockEditor/ConvertStringsToNumbersWhereNeeded.tsx),
+   conditional row in [CombatantDetails.tsx](client/Combatant/CombatantDetails.tsx).
+3. **Per-combatant tracking** — `Combatant.ts`: `CurrentResources` observable
+   (seeded from state or `MaxResources`, same as Mana — not `0` like Wounds),
+   `MaxResources` computed (no `IsPlayerCharacter` gate), `ApplyResourcesChange`
+   clamped `0..MaxResources` using the Mana-style `current - amount` math,
+   persistence + `GetState()` serialization. `CombatantViewModel.ts`:
+   `Resources`/`ResourcesPercentage` computeds + wrapper method.
+4. **Spend/restore UI** — `ApplyResourcesPrompt.tsx` / `RestoreResourcesPrompt.tsx`
+   (new files, mirror `ApplyManaPrompt.tsx`/`RestoreManaPrompt.tsx`), wired into
+   `CombatantCommander.tsx` (`SpendResources`/`SpendResourcesTargeted`/
+   `RestoreResources`), registered in
+   [BuildCombatantCommandList.ts](client/Commands/BuildCombatantCommandList.ts),
+   logged via a new `EventLog.LogResourcesChange`.
+5. **Initiative list** — conditional Resources column in
+   [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx) /
+   [InitiativeListHeader.tsx](client/InitiativeList/InitiativeListHeader.tsx),
+   shown when any combatant has `StatBlock.Resources`; click-to-spend through
+   `CommandContext.ApplyResourcesToCombatant` →
+   [InitiativeListHost.tsx](client/InitiativeList/InitiativeListHost.tsx).
+6. **Player View** — `GetResourcesDisplay`/`GetResourcesColor` in
+   [ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts),
+   reusing `MonsterHPVerbosity`/`PlayerHPVerbosity` for both PCs and monsters
+   (unlike Wounds, which only used the player dropdown). Conditional column in
+   `PlayerView.tsx`, `PlayerViewCombatantHeader.tsx`, `PlayerViewCombatant.tsx`.
+7. **Persistence across remove/re-add** — `Encounter.ts` carries
+   `CurrentResources` from `PersistentCharacter` onto new/re-added
+   `CombatantState`.
+8. **Settings copy** — [OptionsSettings.tsx](client/Settings/components/OptionsSettings.tsx)
+   labels updated to "HP/Mana/Resources/Wounds" on the HP-bar toggle, and
+   "HP/Mana/Resources" on the monster verbosity dropdown / "HP/Mana/Resources/
+   Wounds" on the player verbosity dropdown, matching the confirmed column
+   order (monster dropdown omits Wounds since it's still PC-only).
+9. **Styles** — `.combatant__resources` rules mirroring `.combatant__mana` in
+   [combatants.less](lesscss/components/combatants.less) (grid area,
+   hover/bar-visibility selectors, and the mobile `grid-template` — inserted
+   between the `mana` and `wounds` grid areas to match the column order) and
+   [player-view.less](lesscss/pages/player-view.less), plus a
+   `.stat-label.Resources` spacing rule in
+   [statblock.less](lesscss/components/statblock.less).
+
+Built exactly as planned above, with the naming/icons kept as proposed:
+field/label "Resources", `bolt` (spend) / `redo` (restore) icons, and
+Resources positioned between Mana and Wounds in every column/row ordering
+(initiative list, combatant details, Player View, mobile grid). Verified with
+`npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing unrelated
+dependency-typing errors, no new ones) and `npx jest --config
+client/jest.config.js` (128/128 runnable tests pass, same 8 pre-existing
+`remark-breaks` parse failures as baseline).
+
+Not built, matching what Mana also skipped: a "temporary resources"
+equivalent, and a Resources-specific verbosity setting independent of the HP
+verbosity dropdowns.
+
+## Gold — implementation log (done)
+
+Gold is structurally different from HP/Mana/Resources/Wounds: it's currency,
+not a combat resource, so it doesn't fit the "max/current pair on a stat
+block" pattern at all. Decisions confirmed before drafting this plan:
+
+- **Running total, no max** — Gold is just a number that goes up (loot, pay)
+  and down (purchases). There's no `StatBlock.Gold` template field the way
+  there's a `StatBlock.Mana`/`StatBlock.Wounds` — no percentage, no bar, no
+  "MaxGold" concept anywhere.
+- **Player characters only** — gated behind `IsPlayerCharacter()`, like
+  Wounds. Monster/NPC stat blocks never show a Gold field or column.
+- **Visible and editable during combat**, not just on a character sheet — so
+  unlike a pure "outside combat" ledger, Gold still needs an initiative-list
+  column, a combatant-details row, and spend/gain prompts, the same shape as
+  Mana/Resources/Wounds, just without the max-dependent parts (no percentage
+  bar, no colored gradient — a flat gold/amber color instead).
+
+Because there's no per-stat-block max, several things route differently than
+the Mana/Resources/Wounds precedent:
+
+- **Column/field visibility** can't check `StatBlock.Gold` (it doesn't
+  exist) — it has to check `IsPlayerCharacter()` directly, e.g.
+  `showGoldColumn = encounterState.Combatants.some(c =>
+  StatBlock.IsPlayerCharacter(c.StatBlock))`.
+- **No stat block editor field** — there's nothing to configure per
+  creature/template. Gold starts at 0 for a new `PersistentCharacter` and is
+  only ever changed via the spend/gain prompts (in combat or out, since a
+  persistent character can be edited whenever they're in the tracker).
+- **Verbs are "Spend"/"Gain," not "Spend"/"Restore"** — "Restore" doesn't
+  read naturally for currency. Proposed command labels: "Spend Gold" (icon
+  `coins`) / "Gain Gold" (icon `hand-holding-usd`) — both available in the
+  installed Font Awesome Free set, distinct from Mana's `hat-wizard`/`star`,
+  Resources' `bolt`/`redo`, and Wounds' `skull-crossbones`/`band-aid`.
+- **Player View visibility is a live, per-combatant toggle — not a settings-
+  page checkbox.** Superseded from the earlier plan: a global
+  `DisplayPlayerGold` setting buried in Options wouldn't let a DM flip gold
+  on/off *during* an encounter without leaving the tracker. Instead, mirror
+  the existing **`RevealedAC`/`ToggleRevealedAC` mechanic exactly** — same
+  per-combatant boolean, same command-button pattern, same badge-in-the-row
+  UI, just for Gold:
+  - `CombatantState.RevealedGold?: boolean` (mirrors `RevealedAC`), but
+    **default `true`** (opposite of AC's `false`) — gold isn't the kind of
+    thing a DM builds suspense around like monster AC/HP; the ask here is
+    "shown by default, with a quick way to suppress it when it's a
+    distraction," not "hidden until revealed for a moment." Legacy-encounter
+    migration in `UpdateLegacySavedEncounter.ts` defaults missing
+    `RevealedGold` to `true` to match (the mirror-image of how missing
+    `RevealedAC` defaults to `false`).
+  - `Combatant.RevealedGold` observable, `CombatantViewModel.ToggleRevealedGold()`.
+  - `CombatantCommander.ToggleRevealedGold` command, registered in
+    `BuildCombatantCommandList.ts` as "Hide/Reveal Gold in Player View" (an
+    eye-family icon, e.g. `eye-slash`), sitting in the same per-row command
+    area as "Hide/Reveal AC in Player View" — this is the "left toggle menu"
+    the DM clicks live during an encounter, no settings screen involved.
+  - A small badge on the DM-facing Gold cell — mirrors
+    `.combatant__ac--revealed-badge` — but since default is "shown," the
+    badge logic is inverted: show a "hidden" indicator (e.g. `eye-slash`)
+    when `RevealedGold` is `false`, rather than a "revealed" indicator when
+    true.
+  - `GetGoldDisplay` in `ToPlayerViewCombatantState.ts` returns the raw gold
+    number when `IsPlayerCharacter()` *and* `combatant.RevealedGold()`,
+    `undefined` otherwise — same shape as `AC: combatant.RevealedAC() ?
+    statBlock.AC.Value : undefined`.
+  - No new Settings entry, no verbosity dropdown involvement at all.
+- **Column placement: after Defense (AC)** — confirmed. Gold sits at the very
+  end of the stat cluster (HP, Mana, Resources, Wounds, AC, *Gold*), after
+  Defense rather than immediately after Wounds, since it isn't a
+  health-adjacent stat and reads more like a trailing "wallet" indicator.
+
+Planned file list (same layering as Mana/Wounds/Resources, minus everything
+that depends on a max value):
+
+1. **Data model** — `CurrentGold?: number` **and** `RevealedGold?: boolean`
+   on `CombatantState` ([common/CombatantState.ts](common/CombatantState.ts));
+   `CurrentGold?: number` on `PersistentCharacter`
+   ([common/PersistentCharacter.ts](common/PersistentCharacter.ts)), seeded
+   to `0` in `PersistentCharacter.Initialize` (`RevealedGold` is
+   per-encounter combat state, like `RevealedAC` — it doesn't belong on
+   `PersistentCharacter`). `GoldDisplay?: string` (no `GoldColor` — flat
+   color, doesn't need to vary) on `PlayerViewCombatantState`
+   ([common/PlayerViewCombatantState.ts](common/PlayerViewCombatantState.ts)).
+   No `StatBlock` changes.
+2. **Per-combatant tracking** — `Combatant.ts`: `CurrentGold` observable
+   (seeded from state, defaulting to `0` — never a max, same fix Wounds
+   needed), `RevealedGold` observable (defaulting to `true`, mirroring
+   `RevealedAC`'s field but flipped default), no `MaxGold` computed,
+   `ApplyGoldChange(amount)` as `CurrentGold() - amount` clamped to a floor
+   of `0` with no ceiling (mirrors `ApplyManaChange`'s sign convention:
+   positive input on the "Spend" prompt decreases current), persistence +
+   `GetState()` serialization for both fields. `CombatantViewModel.ts`: a
+   `Gold` computed (just `` `${CurrentGold}` ``, no percentage computed),
+   `ApplyGoldChange` wrapper, and `ToggleRevealedGold()` (mirrors
+   `ToggleRevealedAC()`).
+3. **Spend/gain UI** — `ApplyGoldPrompt.tsx` / `GainGoldPrompt.tsx` (new
+   files, mirror `ApplyManaPrompt.tsx`/`RestoreManaPrompt.tsx` but relabeled),
+   wired into `CombatantCommander.tsx` (`SpendGold`/`SpendGoldTargeted`/
+   `GainGold`/`ToggleRevealedGold`), registered in
+   [BuildCombatantCommandList.ts](client/Commands/BuildCombatantCommandList.ts)
+   as "Spend Gold"/"Gain Gold"/"Hide/Reveal Gold in Player View" (mirroring
+   the "Hide/Reveal AC in Player View" command right next to it), logged via
+   a new `EventLog.LogGoldChange` (the reveal toggle itself isn't logged,
+   matching `ToggleRevealedAC`, which doesn't log either).
+4. **Initiative list** — conditional Gold column in
+   [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx) /
+   [InitiativeListHeader.tsx](client/InitiativeList/InitiativeListHeader.tsx),
+   positioned after the Defense (AC) column, last in the row; visibility and
+   per-row rendering both gated on `IsPlayerCharacter()` rather than a
+   stat-block field. No bar-fill markup (nothing to show a percentage of). A
+   small badge (mirrors `combatant__ac--revealed-badge`, inverted logic —
+   shown when `RevealedGold` is `false`) indicates to the DM that a
+   character's gold is currently hidden from players. Click-to-spend through
+   `CommandContext.ApplyGoldToCombatant` →
+   [InitiativeListHost.tsx](client/InitiativeList/InitiativeListHost.tsx) →
+   `SpendGoldTargeted`.
+5. **Player View** — `GetGoldDisplay` in
+   [ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts)
+   returns the raw gold number when `IsPlayerCharacter()` *and*
+   `combatant.RevealedGold()`, `undefined` otherwise — no settings-page
+   toggle, no bucketed labels, no color. Conditional column in
+   `PlayerView.tsx`, `PlayerViewCombatantHeader.tsx`, `PlayerViewCombatant.tsx`,
+   positioned after the AC column, last in the row.
+6. **Persistence across remove/re-add** — `Encounter.ts` carries
+   `CurrentGold` from `PersistentCharacter` onto new/re-added
+   `CombatantState`, defaulting missing values to `0` (never a max, same as
+   the Wounds fix). `RevealedGold` defaults to `true` for newly-added
+   combatants ([Encounter.ts](client/Encounter/Encounter.ts) — both the
+   fresh-add and re-add paths — and
+   [InitializeCombatantFromStatBlock.tsx](client/Reducers/InitializeCombatantFromStatBlock.tsx)).
+7. **Legacy migration** — [UpdateLegacySavedEncounter.ts](client/Encounter/UpdateLegacySavedEncounter.ts)
+   defaults a missing `RevealedGold` to `true` on old saved encounters, the
+   mirror image of how it defaults a missing `RevealedAC` to `false`.
+8. **Styles** — `.combatant__gold` rules in
+   [combatants.less](lesscss/components/combatants.less) (grid area
+   positioned after `ac` *and* `hp` in the mobile `grid-template` — resolved
+   by putting `gold` last of all, after `hp`, matching its "last column"
+   position on desktop) and
+   [player-view.less](lesscss/pages/player-view.less); a flat gold/amber
+   color (`rgb(212,163,42)`) instead of a computed gradient, since there's
+   no max to compute a percentage against. A `.combatant__gold--hidden-badge`
+   style mirroring `.combatant__ac--revealed-badge`.
+
+Built exactly as planned: "Spend Gold" (`coins`) / "Gain Gold"
+(`hand-holding-usd`) commands; a live per-combatant `RevealedGold` toggle
+("Hide/Reveal Gold in Player View", `eye-slash` icon) sitting right next to
+"Reveal/Hide AC in Player View" in each row's command area — defaulting to
+**visible** (`true`), the mirror image of `RevealedAC`'s default `false` —
+with a small hidden-badge on the DM's Gold cell when a character's gold is
+currently suppressed from players; Gold positioned as the last column,
+after Defense (AC). Two new `Metrics.Event` entries
+(`CombatantGoldHidden`/`CombatantGoldRevealed`) were added alongside the
+existing AC ones since `ToggleRevealedAC` turned out to already log/track on
+toggle (the earlier note that it "doesn't log either" was a planning
+mistake — corrected during implementation to match). Verified with `npx tsc
+--noEmit -p client/tsconfig.json` (same 7 pre-existing unrelated errors, no
+new ones) and `npx jest --config client/jest.config.js` (128/128 runnable
+tests pass, same 8 pre-existing `remark-breaks` parse failures as baseline).
+
+### Follow-up: Gold switched from Mana-style spend/gain to Wounds-style add/subtract
+
+Originally Gold copied Mana's sign convention (`CurrentGold() - amount`,
+so a positive number on the primary prompt *decreased* gold — "spend").
+Changed to match Wounds' convention instead (`CurrentGold() + amount`, a
+positive number *increases* gold — "add"), per request. Renamed throughout
+to keep the math and the labels honest:
+
+- `Combatant.ApplyGoldChange`: `current - amount` → `current + amount`
+  (still floored at `0`, still no ceiling).
+- Commands: `SpendGold`/`SpendGoldTargeted` → `AddGold`/`AddGoldTargeted`
+  ("Add Gold", icon `hand-holding-usd`); `GainGold` → `SubtractGold`
+  ("Subtract Gold", icon `coins`) — icons swapped so `hand-holding-usd`
+  reads as "money in" and `coins` reads as "money out," matching their new
+  meanings.
+- Prompts: `ApplyGoldPrompt.tsx` relabeled "Add or subtract gold for X"
+  (was "Spend or gain gold"); `GainGoldPrompt.tsx` deleted and replaced by
+  [SubtractGoldPrompt.tsx](client/Prompts/SubtractGoldPrompt.tsx) (mirrors
+  `RestoreWoundsPrompt.tsx`'s negate-before-apply pattern: passes
+  `"-" + subtractAmount` to `ApplyGoldChange` so a positive field value
+  still reads as "subtract this much").
+- `EventLog.LogGoldChange` wording flipped to match: positive amount →
+  "gold added for X," negative → "gold subtracted from X" (was "spent
+  by"/"gained by").
+- The row's click-to-adjust cell now opens the "Add Gold" prompt by default
+  (was "Spend Gold") — clicking a PC's gold cell mid-combat now defaults to
+  recording loot/reward, not an expense, matching how clicking the Wounds
+  cell defaults to "Add Wounds."
+
+Note: the "Hide/Reveal Gold in Player View" toggle (`RevealedGold`,
+`ToggleRevealedGold`, the `coins`+`slash` `fa-stack` icon) is unrelated to
+this change and untouched — it still lives on `combatant.RevealedGold` and
+still defaults to visible.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors, no new ones) and `npx jest --config
+client/jest.config.js` (128/128 runnable tests pass, same baseline).
+
+## Persistent tags for player characters — implementation log (done)
+
+Previously, `Tags` lived only in `CombatantState` (per-encounter) — a PC's
+conditions/labels always reset to empty when added to a new encounter or
+re-added after removal, unlike `CurrentHP`/`CurrentMana`/`CurrentResources`/
+`CurrentWounds`/`CurrentGold`/`Notes`, which all sync to `PersistentCharacter`.
+
+**Scope decision**: only *non-expiring* tags persist (`!tag.HasDuration`,
+i.e. tags added without a duration set in the tag prompt). Duration tags
+carry `DurationRemaining`/`DurationTiming`/`DurationCombatantId` — a round
+count and a reference to a specific combatant ID from *that* encounter —
+which is meaningless once carried into a different encounter (the
+referenced combatant likely doesn't exist there). A tag like "Poisoned...
+until start of Grokk's turn in 3 rounds" only makes sense inside the
+encounter it was added in; a tag like "Cursed by the Baron" (no duration)
+makes sense forever.
+
+1. **Data model** — `PersistentCharacter.Tags?: TagState[]`
+   ([common/PersistentCharacter.ts](common/PersistentCharacter.ts)), seeded
+   to `[]` in `Initialize()`.
+2. **Persistence** — `Combatant.ts`'s `AttachToPersistentCharacterLibrary`
+   adds a `this.Tags.subscribe(...)` (alongside the existing
+   `CurrentHP`/`CurrentMana`/etc. subscriptions) that filters to
+   `!t.HasDuration`, serializes via each tag's `GetState()`, and calls
+   `updatePersistentCharacter(id, { Tags: persistentTags })` — fires
+   whenever a tag is added or removed (Knockout's `observableArray`
+   subscription triggers on `push`/`remove`/`splice`, not on a nested
+   observable like `DurationRemaining` ticking down each round, so this
+   never fires spuriously during normal duration-tag countdown).
+3. **Rehydration** — `Encounter.ts`'s `AddCombatantFromPersistentCharacter`
+   seeds the new combatant's `CombatantState.Tags` from
+   `persistentCharacter.Tags ?? []` (previously always `[]`). `Tag.FromTagStates`
+   already reconstructs `Tag` objects from `TagState[]` correctly — a
+   persisted non-duration tag round-trips with `DurationRemaining: -1`,
+   which reconstructs `HasDuration: false`, so it's never added to
+   `EncounterFlow`'s duration-tracking list ([Encounter.ts](client/Encounter/Encounter.ts),
+   `combatant.Tags().forEach(tag => { if (tag.HasDuration) ... })`).
+
+**Known limitation, scoped out deliberately**: the *reload-a-saved-encounter*
+path (`Encounter.ts`, the `combatantsInLabelOrder.forEach` block that
+re-syncs `CurrentHP`/`CurrentMana`/etc. from the canonical `PersistentCharacter`
+on load) does *not* re-sync `Tags`. That path already has the encounter's own
+saved `Tags` snapshot (including any non-expiring tags, since those were
+already persisted when originally added). The gap: if the same PC picked up
+a new non-expiring tag in a *different* encounter since this one was last
+saved, reloading this encounter won't show it. Fixing that would mean
+merging the encounter's own duration tags with the canonical non-expiring
+tags on reload — deliberately left out to keep this change focused; flag if
+that multi-encounter case turns out to matter in practice.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing
+unrelated errors, no new ones) and `npx jest --config client/jest.config.js`
+(128/128 runnable tests pass, same 8 pre-existing `remark-breaks` parse
+failures as baseline).

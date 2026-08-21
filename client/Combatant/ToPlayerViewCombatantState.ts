@@ -14,8 +14,11 @@ export function ToPlayerViewCombatantState(
     HPColor: GetHPColor(combatant),
     ManaDisplay: GetManaDisplay(combatant),
     ManaColor: GetManaColor(combatant),
+    ResourcesDisplay: GetResourcesDisplay(combatant),
+    ResourcesColor: GetResourcesColor(combatant),
     WoundsDisplay: GetWoundsDisplay(combatant),
     WoundsColor: GetWoundsColor(combatant),
+    GoldDisplay: GetGoldDisplay(combatant),
     Initiative: combatant.Initiative(),
     IsPlayerCharacter: combatant.IsPlayerCharacter(),
     Tags: combatant
@@ -115,6 +118,54 @@ function GetManaColor(combatant: Combatant): string | undefined {
   return "rgb(0,120,220)";
 }
 
+function GetResourcesDisplay(combatant: Combatant): string | undefined {
+  const maxResources = combatant.MaxResources();
+  if (maxResources === undefined) {
+    return undefined;
+  }
+
+  const resourcesVerbosity = combatant.IsPlayerCharacter()
+    ? CurrentSettings().PlayerView.PlayerHPVerbosity
+    : CurrentSettings().PlayerView.MonsterHPVerbosity;
+  const currentResources = combatant.CurrentResources();
+  if (resourcesVerbosity == "Actual HP") {
+    return `${currentResources}/${maxResources}`;
+  }
+  if (resourcesVerbosity == "Hide All") {
+    return "";
+  }
+  if (resourcesVerbosity == "Damage Taken") {
+    return (currentResources - maxResources).toString();
+  }
+  if (currentResources <= 0) {
+    return "<span class='defeatedHP'>Empty</span>";
+  } else if (currentResources < maxResources / 2) {
+    return "<span class='bloodiedHP'>Low</span>";
+  } else if (currentResources < maxResources) {
+    return "<span class='hurtHP'>Reduced</span>";
+  }
+  return "<span class='healthyHP'>Full</span>";
+}
+
+function GetResourcesColor(combatant: Combatant): string | undefined {
+  const maxResources = combatant.MaxResources();
+  if (maxResources === undefined) {
+    return undefined;
+  }
+
+  const resourcesVerbosity = combatant.IsPlayerCharacter()
+    ? CurrentSettings().PlayerView.PlayerHPVerbosity
+    : CurrentSettings().PlayerView.MonsterHPVerbosity;
+  if (
+    resourcesVerbosity == "Monochrome Label" ||
+    resourcesVerbosity == "Hide All" ||
+    resourcesVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  return "rgb(210,150,20)";
+}
+
 function GetWoundsDisplay(combatant: Combatant): string | undefined {
   const maxWounds = combatant.MaxWounds();
   const currentWounds = combatant.CurrentWounds();
@@ -162,6 +213,14 @@ function GetWoundsColor(combatant: Combatant): string | undefined {
   const green = Math.floor(((maxWounds - currentWounds) / maxWounds) * 170);
   const red = Math.floor((currentWounds / maxWounds) * 170);
   return "rgb(" + red + "," + green + ",0)";
+}
+
+function GetGoldDisplay(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedGold()) {
+    return undefined;
+  }
+
+  return `${combatant.CurrentGold()}`;
 }
 
 function GetHPColor(combatant: Combatant) {

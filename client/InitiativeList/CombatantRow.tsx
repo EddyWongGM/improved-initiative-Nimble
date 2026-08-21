@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { CombatantState } from "../../common/CombatantState";
+import { StatBlock as StatBlockNamespace } from "../../common/StatBlock";
 import { Tags } from "./Tags";
 import { CommandContext } from "./CommandContext";
 import { SettingsContext } from "../Settings/SettingsContext";
@@ -18,7 +19,9 @@ type CombatantRowProps = {
   showIndexLabel: boolean;
   initiativeIndex: number;
   showManaColumn: boolean;
+  showResourcesColumn: boolean;
   showWoundsColumn: boolean;
+  showGoldColumn: boolean;
 };
 
 type CombatantDragData = {
@@ -211,6 +214,47 @@ export function CombatantRow(props: CombatantRowProps) {
         </td>
       )}
 
+      {props.showResourcesColumn && (
+        <td className="combatant__resources">
+          {props.combatantState.StatBlock.Resources ? (
+            <div
+              className="combatant__resources-outer"
+              onClick={event => {
+                commandContext.ApplyResourcesToCombatant(
+                  props.combatantState.Id
+                );
+                event.stopPropagation();
+              }}
+            >
+              <div
+                className="combatant__resources-inner"
+                style={getResourcesStyle(props)}
+              >
+                <span
+                  className="combatant__mobile-icon fas fa-bolt"
+                  aria-hidden="true"
+                />
+
+                {renderResourcesText(props)}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderResourcesBarStyle(props)}
+                    />
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span
+              className="combatant__mobile-icon fas fa-bolt"
+              aria-hidden="true"
+            />
+          )}
+        </td>
+      )}
+
       {props.showWoundsColumn && (
         <td className="combatant__wounds">
           {props.combatantState.StatBlock.Wounds ? (
@@ -265,6 +309,41 @@ export function CombatantRow(props: CombatantRowProps) {
           </Tippy>
         )}
       </td>
+
+      {props.showGoldColumn && (
+        <td className="combatant__gold">
+          {StatBlockNamespace.IsPlayerCharacter(
+            props.combatantState.StatBlock
+          ) ? (
+            <div
+              className="combatant__gold-outer"
+              onClick={event => {
+                commandContext.ApplyGoldToCombatant(props.combatantState.Id);
+                event.stopPropagation();
+              }}
+            >
+              <div className="combatant__gold-inner" style={getGoldStyle()}>
+                <span
+                  className="combatant__mobile-icon fas fa-coins"
+                  aria-hidden="true"
+                />
+
+                {renderGoldText(props)}
+                {props.combatantState.RevealedGold === false && (
+                  <Tippy content="Hidden from Player View">
+                    <span className="combatant__gold--hidden-badge fas fa-eye-slash" />
+                  </Tippy>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span
+              className="combatant__mobile-icon fas fa-coins"
+              aria-hidden="true"
+            />
+          )}
+        </td>
+      )}
 
       {settings.StatBlock.CustomFields.filter(f => f.showInEncounterView).map(
         field => (
@@ -384,15 +463,24 @@ function CommandButton(props: { command: Command }) {
   if (!showInCombatantRow) {
     return null;
   }
+  const isGoldToggle = command.Id === "toggle-reveal-gold";
   return (
     <Tippy content={`${command.Description} [${command.KeyBinding}]`}>
       <button
         className={
-          "combatant__command-button fa-clickable fa-" + fontAwesomeIcon
+          "combatant__command-button fa-clickable" +
+          (isGoldToggle ? "" : " fa-" + fontAwesomeIcon)
         }
         onClick={command.ActionBinding}
         aria-label={command.Description}
-      ></button>
+      >
+        {isGoldToggle && (
+          <span className="fa-stack">
+            <i className="fas fa-coins fa-stack-2x"></i>
+            <i className="fas fa-slash fa-stack-2x"></i>
+          </span>
+        )}
+      </button>
     </Tippy>
   );
 }
@@ -464,6 +552,39 @@ function renderManaBarStyle(props: CombatantRowProps) {
   }
   const currentMana = props.combatantState.CurrentMana ?? 0;
   return { width: Math.floor((currentMana / maxMana) * 100) + "%" };
+}
+
+function getResourcesStyle(props: CombatantRowProps) {
+  const maxResources = props.combatantState.StatBlock.Resources?.Value;
+  if (!maxResources) {
+    return {};
+  }
+  return { color: "rgb(210,150,20)" };
+}
+
+function renderResourcesText(props: CombatantRowProps) {
+  const maxResources = props.combatantState.StatBlock.Resources?.Value;
+  if (!maxResources) {
+    return "";
+  }
+  return `${props.combatantState.CurrentResources ?? 0}/${maxResources}`;
+}
+
+function renderResourcesBarStyle(props: CombatantRowProps) {
+  const maxResources = props.combatantState.StatBlock.Resources?.Value;
+  if (!maxResources) {
+    return { width: "0%" };
+  }
+  const currentResources = props.combatantState.CurrentResources ?? 0;
+  return { width: Math.floor((currentResources / maxResources) * 100) + "%" };
+}
+
+function getGoldStyle() {
+  return { color: "rgb(212,163,42)" };
+}
+
+function renderGoldText(props: CombatantRowProps) {
+  return `${props.combatantState.CurrentGold ?? 0}`;
 }
 
 function getWoundsStyle(props: CombatantRowProps) {
