@@ -1,5 +1,5 @@
 import * as ko from "knockout";
-import { find, max, sortBy } from "lodash";
+import { find, max, partition, sortBy } from "lodash";
 import * as React from "react";
 import * as Sentry from "@sentry/browser";
 
@@ -44,6 +44,13 @@ export class Encounter {
   );
 
   private lastVisibleActiveCombatantId: string | null = null;
+
+  public MonstersActFirst = ko.observable<boolean>(false);
+
+  public ToggleMonstersActFirst = () => {
+    this.MonstersActFirst(!this.MonstersActFirst());
+    this.SortByPhase();
+  };
 
   constructor(
     private playerViewClient: PlayerViewClient,
@@ -101,11 +108,12 @@ export class Encounter {
     if (stable) {
       return [c => -c.Initiative()];
     } else {
+      const monstersActFirst = this.MonstersActFirst();
       return [
         c => -c.Initiative(),
         c => -this.getGroupBonusForCombatant(c),
         c => -c.InitiativeBonus(),
-        c => (c.IsPlayerCharacter() ? 0 : 1),
+        c => (c.ActsInPlayerPhase() !== monstersActFirst ? 0 : 1),
         c => c.InitiativeGroup(),
         c => c.StatBlock().Name,
         c => c.IndexLabel()
@@ -119,6 +127,22 @@ export class Encounter {
       this.getCombatantSortIteratees(stable)
     );
     this.combatants(sortedCombatants);
+  };
+
+  /**
+   * Splits combatants into a player block and a monster block, in whichever
+   * order MonstersActFirst dictates, WITHOUT re-ranking within each block -
+   * Nimble has no cross-creature initiative, so "which side goes first" is a
+   * pure DM override and everyone's existing relative order (manual/drag
+   * order) is preserved within their side.
+   */
+  public SortByPhase = () => {
+    const monstersActFirst = this.MonstersActFirst();
+    const [firstPhase, secondPhase] = partition(
+      this.combatants(),
+      c => c.ActsInPlayerPhase() !== monstersActFirst
+    );
+    this.combatants([...firstPhase, ...secondPhase]);
   };
 
   public ImportEncounter = encounter => {
@@ -397,7 +421,8 @@ export class Encounter {
           .filter(c => !c.IsPendingRemoval())
           .map<CombatantState>(c => c.GetState()),
         BackgroundImageUrl: this.TemporaryBackgroundImageUrl(),
-        SaveEncounterDefaults: this.SaveEncounterDefaults()
+        SaveEncounterDefaults: this.SaveEncounterDefaults(),
+        MonstersActFirst: this.MonstersActFirst()
       };
     }
   );
@@ -436,6 +461,8 @@ export class Encounter {
     updatePersistentCharacter: UpdatePersistentCharacter,
     persistentCharacterLibrary: Library<PersistentCharacter>
   ) => {
+    this.MonstersActFirst(encounterState.MonstersActFirst ?? false);
+
     const combatantsInLabelOrder = _.sortBy(
       encounterState.Combatants,
       c => c.IndexLabel

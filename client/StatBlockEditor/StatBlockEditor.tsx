@@ -176,7 +176,18 @@ export class StatBlockEditor extends React.Component<
             <EnumToggle
               labelsByOption={{
                 "": "Non Player Character",
-                player: "Player Character"
+                player: "Player Character",
+                companion: "Companion"
+              }}
+              fieldName="Player"
+            />
+          )}
+          {(this.props.editorTarget == "library" ||
+            this.props.editorTarget == "combatant") && (
+            <EnumToggle
+              labelsByOption={{
+                "": "Monster/NPC",
+                companion: "Companion"
               }}
               fieldName="Player"
             />
@@ -196,7 +207,7 @@ export class StatBlockEditor extends React.Component<
           {this.props.statBlock.Player == "player" && (
             <ValueAndNotesField label="Hit Dice" fieldName="HitDice" />
           )}
-          {this.props.statBlock.Player == "player" && (
+          {StatBlock.ActsInPlayerPhase(this.props.statBlock) && (
             <ValueAndNotesField label="Wounds" fieldName="Wounds" />
           )}
           <InitiativeField />

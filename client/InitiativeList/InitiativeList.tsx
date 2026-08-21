@@ -29,7 +29,7 @@ export function InitiativeList(props: {
     c => c.StatBlock.HitDice
   );
   const showWoundsColumn = encounterState.Combatants.some(
-    c => c.StatBlock.Wounds && StatBlock.IsPlayerCharacter(c.StatBlock)
+    c => c.StatBlock.Wounds && StatBlock.ActsInPlayerPhase(c.StatBlock)
   );
   const showGoldColumn = encounterState.Combatants.some(c =>
     StatBlock.IsPlayerCharacter(c.StatBlock)
@@ -40,11 +40,17 @@ export function InitiativeList(props: {
     <div className="initiative-list">
       <div className="initiative-list__header">
         <h2>Names by Initiative</h2>
+        {encounterState.MonstersActFirst && (
+          <span className="initiative-list__phase-indicator">
+            Monsters act first
+          </span>
+        )}
         {anyHasTakenTurn && (
           <Button
             text="Reset Turns"
             tooltip="Uncheck 'has taken turn' for everyone"
             onClick={commandContext.ResetHasTakenTurnForAllCombatants}
+            additionalClassNames="c-button--reset-turns"
           />
         )}
       </div>
@@ -61,7 +67,7 @@ export function InitiativeList(props: {
           {encounterState.Combatants.map((combatantState, index) => {
             const siblingCount =
               props.combatantCountsByName[combatantState.StatBlock.Name] || 1;
-            const isMonster = !StatBlock.IsPlayerCharacter(
+            const isMonster = !StatBlock.ActsInPlayerPhase(
               combatantState.StatBlock
             );
 

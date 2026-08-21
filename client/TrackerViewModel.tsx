@@ -328,7 +328,7 @@ export class TrackerViewModel {
       name: statBlock.Name
     });
 
-    if (statBlock.Player == "") {
+    if (!StatBlock.IsPlayerCharacter(statBlock)) {
       this.EditStatBlock({
         editorTarget: "library",
         onSave: this.Libraries.StatBlocks.SaveNewListing,

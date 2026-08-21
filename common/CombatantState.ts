@@ -35,6 +35,7 @@ export interface CombatantState {
   IndexLabel: number | null;
   Tags: TagState[];
   Hidden: boolean;
+  KeepHidden?: boolean;
   RevealedAC: boolean;
   HasTakenTurn?: boolean;
   RoundCounter?: number;

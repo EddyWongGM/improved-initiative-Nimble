@@ -1,8 +1,10 @@
+import { PersistentCharacter } from "../../common/PersistentCharacter";
 import { StatBlock } from "../../common/StatBlock";
 import { Encounter } from "../Encounter/Encounter";
 import { InitializeTestSettings } from "../test/InitializeTestSettings";
 import { addCombatantFromStatBlock } from "../test/addCombatant";
 import { buildEncounter } from "../test/buildEncounter";
+import { Tag } from "./Tag";
 import { ToPlayerViewCombatantState } from "./ToPlayerViewCombatantState";
 
 describe("Combatant", () => {
@@ -110,6 +112,137 @@ describe("Combatant", () => {
       expect(combatant.TemporaryWounds()).toBe(0);
       expect(combatant.CurrentWounds()).toBe(1);
     });
+
+    test("ApplyManaChange clamps at MaxMana when restoring beyond full", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Mana: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentMana(8);
+
+      combatant.ApplyManaChange(-100);
+
+      expect(combatant.CurrentMana()).toBe(10);
+    });
+
+    test("ApplyResourcesChange spends from TemporaryResources first, then spills over", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Resources: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentResources(10);
+      combatant.ApplyTemporaryResources(5);
+
+      combatant.ApplyResourcesChange(3);
+      expect(combatant.TemporaryResources()).toBe(2);
+      expect(combatant.CurrentResources()).toBe(10);
+
+      combatant.ApplyResourcesChange(6);
+      expect(combatant.TemporaryResources()).toBe(0);
+      expect(combatant.CurrentResources()).toBe(6);
+    });
+
+    test("ApplyResourcesChange restoring resources does not touch TemporaryResources, and clamps at max", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Resources: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentResources(4);
+      combatant.ApplyTemporaryResources(5);
+
+      combatant.ApplyResourcesChange(-3);
+      expect(combatant.TemporaryResources()).toBe(5);
+      expect(combatant.CurrentResources()).toBe(7);
+
+      combatant.ApplyResourcesChange(-100);
+      expect(combatant.CurrentResources()).toBe(10);
+    });
+
+    test("ApplyHitDiceChange spends from TemporaryHitDice first, then spills over, and clamps at 0", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        HitDice: { Value: 4, Notes: "" }
+      });
+      combatant.CurrentHitDice(4);
+      combatant.ApplyTemporaryHitDice(2);
+
+      combatant.ApplyHitDiceChange(1);
+      expect(combatant.TemporaryHitDice()).toBe(1);
+      expect(combatant.CurrentHitDice()).toBe(4);
+
+      combatant.ApplyHitDiceChange(100);
+      expect(combatant.TemporaryHitDice()).toBe(0);
+      expect(combatant.CurrentHitDice()).toBe(0);
+    });
+
+    test("ApplyHitDiceChange restoring hit dice does not touch TemporaryHitDice", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        HitDice: { Value: 4, Notes: "" }
+      });
+      combatant.CurrentHitDice(1);
+      combatant.ApplyTemporaryHitDice(2);
+
+      combatant.ApplyHitDiceChange(-1);
+      expect(combatant.TemporaryHitDice()).toBe(2);
+      expect(combatant.CurrentHitDice()).toBe(2);
+    });
+
+    test("ApplyGoldChange: a positive amount adds gold (opposite sign convention from Mana/Resources/Hit Dice)", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.CurrentGold(10);
+
+      combatant.ApplyGoldChange(5);
+
+      expect(combatant.CurrentGold()).toBe(15);
+    });
+
+    test("ApplyGoldChange: a negative amount subtracts gold, floored at 0 with no ceiling", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.CurrentGold(10);
+
+      combatant.ApplyGoldChange(-3);
+      expect(combatant.CurrentGold()).toBe(7);
+
+      combatant.ApplyGoldChange(-100);
+      expect(combatant.CurrentGold()).toBe(0);
+
+      combatant.ApplyGoldChange(100000);
+      expect(combatant.CurrentGold()).toBe(100000);
+    });
+  });
+
+  describe("Persistent tags for player characters", () => {
+    test("Only non-duration tags sync to the PersistentCharacter", async () => {
+      const persistentCharacter = PersistentCharacter.Initialize({
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      const updatePersistentCharacter = jest.fn(async () => null);
+      const combatant = await encounter.AddCombatantFromPersistentCharacter(
+        persistentCharacter,
+        updatePersistentCharacter,
+        false
+      );
+
+      combatant.Tags.push(new Tag("Cursed by the Baron", combatant, false));
+      combatant.Tags.push(new Tag("Poisoned", combatant, false, 3));
+
+      expect(updatePersistentCharacter).toHaveBeenLastCalledWith(
+        persistentCharacter.Id,
+        {
+          Tags: [expect.objectContaining({ Text: "Cursed by the Baron" })]
+        }
+      );
+    });
   });
 
   describe("ToPlayerViewCombatantState", () => {
@@ -130,6 +263,167 @@ describe("Combatant", () => {
       expect(playerViewCombatantState.HPDisplay).toEqual(
         "<span class='healthyHP'>Healthy</span>"
       );
+    });
+
+    test("ManaDisplay is undefined when the statblock has no Mana", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      expect(ToPlayerViewCombatantState(combatant).ManaDisplay).toBeUndefined();
+    });
+
+    test("ManaDisplay shows only the current value to players (max is DM-only)", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        Mana: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentMana(6);
+      expect(ToPlayerViewCombatantState(combatant).ManaDisplay).toEqual("6");
+    });
+
+    test("ManaDisplay shows a qualitative label for monsters, using MonsterHPVerbosity", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Mana: { Value: 10, Notes: "" }
+      });
+      combatant.CurrentMana(10);
+      expect(ToPlayerViewCombatantState(combatant).ManaDisplay).toEqual(
+        "<span class='healthyHP'>Full</span>"
+      );
+    });
+
+    test("HitDiceDisplay is undefined for a monster, even if its statblock has Hit Dice", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        HitDice: { Value: 2, Notes: "" }
+      });
+      expect(
+        ToPlayerViewCombatantState(combatant).HitDiceDisplay
+      ).toBeUndefined();
+    });
+
+    test("HitDiceDisplay is undefined for a player character while Hit Dice are still full", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        HitDice: { Value: 2, Notes: "" }
+      });
+      expect(
+        ToPlayerViewCombatantState(combatant).HitDiceDisplay
+      ).toBeUndefined();
+    });
+
+    test("HitDiceDisplay shows once at least one Hit Die is spent", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        HitDice: { Value: 2, Notes: "" }
+      });
+      combatant.ApplyHitDiceChange(1);
+      expect(ToPlayerViewCombatantState(combatant).HitDiceDisplay).toEqual(
+        "-1"
+      );
+    });
+
+    test("HitDiceDisplay is undefined when RevealedHitDice is locked off, even with Hit Dice spent", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        HitDice: { Value: 2, Notes: "" }
+      });
+      combatant.ApplyHitDiceChange(1);
+      combatant.RevealedHitDice(false);
+      expect(
+        ToPlayerViewCombatantState(combatant).HitDiceDisplay
+      ).toBeUndefined();
+    });
+
+    test("WoundsDisplay is undefined for a monster, even if its statblock has Wounds", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Wounds: { Value: 5, Notes: "" }
+      });
+      expect(
+        ToPlayerViewCombatantState(combatant).WoundsDisplay
+      ).toBeUndefined();
+    });
+
+    test("WoundsDisplay is undefined for an untouched player character (hidden until first wound)", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        Wounds: { Value: 5, Notes: "" }
+      });
+      expect(
+        ToPlayerViewCombatantState(combatant).WoundsDisplay
+      ).toBeUndefined();
+    });
+
+    test("WoundsDisplay shows the current value once a wound is taken", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player",
+        Wounds: { Value: 5, Notes: "" }
+      });
+      combatant.ApplyWoundsChange(2);
+      expect(ToPlayerViewCombatantState(combatant).WoundsDisplay).toEqual("2");
+    });
+
+    test("A companion tracks Wounds the same as a player character", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "companion",
+        Wounds: { Value: 5, Notes: "" }
+      });
+
+      expect(combatant.MaxWounds()).toBe(5);
+      expect(
+        ToPlayerViewCombatantState(combatant).WoundsDisplay
+      ).toBeUndefined();
+
+      combatant.ApplyWoundsChange(2);
+      expect(ToPlayerViewCombatantState(combatant).WoundsDisplay).toEqual("2");
+    });
+
+    test("GoldDisplay is undefined for a monster", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default()
+      });
+      combatant.CurrentGold(50);
+      combatant.RevealedGold(true);
+      expect(ToPlayerViewCombatantState(combatant).GoldDisplay).toBeUndefined();
+    });
+
+    test("GoldDisplay is undefined for a player character whose gold is not revealed", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.CurrentGold(50);
+      expect(combatant.RevealedGold()).toBe(false);
+      expect(ToPlayerViewCombatantState(combatant).GoldDisplay).toBeUndefined();
+    });
+
+    test("GoldDisplay shows once a player character's gold is revealed", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.CurrentGold(50);
+      combatant.RevealedGold(true);
+      expect(ToPlayerViewCombatantState(combatant).GoldDisplay).toEqual("50");
+    });
+
+    test("IndexLabel is not forced onto a companion by AlwaysNumberMonsters, same as a player character", () => {
+      InitializeTestSettings({ Rules: { AlwaysNumberMonsters: true } });
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Wolf",
+        Player: "companion"
+      });
+      expect(ToPlayerViewCombatantState(combatant).IndexLabel).toBeUndefined();
     });
   });
 });

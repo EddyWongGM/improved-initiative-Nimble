@@ -74,6 +74,7 @@ export class Combatant {
   public InitiativeGroup = ko.observable<string>(null);
   public StatBlock = ko.observable<StatBlock>(StatBlock.Default());
   public Hidden = ko.observable(false);
+  public KeepHidden = ko.observable(false);
   public RevealedAC = ko.observable(false);
   public RevealedGold = ko.observable(true);
   public RevealedHitDice = ko.observable(true);
@@ -131,6 +132,7 @@ export class Combatant {
     this.Alias(savedCombatant.Alias);
     this.Tags(Tag.FromTagStates(savedCombatant.Tags, this));
     this.Hidden(savedCombatant.Hidden);
+    this.KeepHidden(savedCombatant.KeepHidden ?? false);
     this.RevealedAC(savedCombatant.RevealedAC);
     this.RevealedGold(savedCombatant.RevealedGold ?? true);
     this.RevealedHitDice(savedCombatant.RevealedHitDice ?? true);
@@ -207,10 +209,10 @@ export class Combatant {
   public UpdateIndexLabel(oldName?: string) {
     if (
       CurrentSettings().Rules.AlwaysNumberMonsters &&
-      !this.IsPlayerCharacter()
+      !this.ActsInPlayerPhase()
     ) {
       const otherMonsters = this.Encounter.Combatants().filter(
-        c => c !== this && !c.IsPlayerCharacter()
+        c => c !== this && !c.ActsInPlayerPhase()
       );
       // A duplicated combatant inherits its source's IndexLabel, which
       // collides with the still-present source - treat that the same as
@@ -274,6 +276,14 @@ export class Combatant {
     StatBlock.IsPlayerCharacter(this.StatBlock())
   );
 
+  public IsCompanion = ko.computed(() =>
+    StatBlock.IsCompanion(this.StatBlock())
+  );
+
+  public ActsInPlayerPhase = ko.computed(() =>
+    StatBlock.ActsInPlayerPhase(this.StatBlock())
+  );
+
   public MaxHP = ko.computed(() => this.StatBlock().HP.Value);
 
   public MaxMana = ko.computed(() => this.StatBlock().Mana?.Value);
@@ -285,7 +295,7 @@ export class Combatant {
   );
 
   public MaxWounds = ko.computed(() =>
-    this.IsPlayerCharacter() ? this.StatBlock().Wounds?.Value : undefined
+    this.ActsInPlayerPhase() ? this.StatBlock().Wounds?.Value : undefined
   );
 
   public GetInitiativeRoll: () => AbilityCheckResult = () => {
@@ -503,7 +513,7 @@ export class Combatant {
     }
     const alwaysNumberMonsters =
       CurrentSettings().Rules.AlwaysNumberMonsters &&
-      !this.IsPlayerCharacter();
+      !this.ActsInPlayerPhase();
     if (combatantCount > 1 || alwaysNumberMonsters) {
       return name + " " + index;
     }
@@ -536,6 +546,7 @@ export class Combatant {
         .filter(t => t.NotExpired())
         .map(t => t.GetState()),
       Hidden: this.Hidden(),
+      KeepHidden: this.KeepHidden(),
       RevealedAC: this.RevealedAC(),
       RevealedGold: this.RevealedGold(),
       RevealedHitDice: this.RevealedHitDice(),

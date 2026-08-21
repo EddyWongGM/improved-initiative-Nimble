@@ -320,7 +320,7 @@ export function CombatantRow(props: CombatantRowProps) {
       {props.showWoundsColumn && (
         <td className="combatant__wounds">
           {props.combatantState.StatBlock.Wounds &&
-          StatBlockNamespace.IsPlayerCharacter(
+          StatBlockNamespace.ActsInPlayerPhase(
             props.combatantState.StatBlock
           ) ? (
             <div

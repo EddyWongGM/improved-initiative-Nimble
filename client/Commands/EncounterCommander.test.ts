@@ -113,6 +113,19 @@ describe("EncounterCommander", () => {
     expect(encounter.ObservableEncounterState().Combatants.length).toBe(1);
   });
 
+  test("CleanEncounter keeps a companion, same as a player character", () => {
+    const monster = addCombatantFromStatBlock(encounter);
+    const companion = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Player: "companion"
+    });
+
+    encounterCommander.CleanEncounter();
+
+    expect(monster.IsPendingRemoval()).toBe(true);
+    expect(companion.IsPendingRemoval()).toBe(false);
+  });
+
   test("Save Encounter starts with empty defaults", () => {
     expect(getSavePrompt().initialValues).toMatchObject({
       Name: "",
@@ -311,6 +324,123 @@ describe("EncounterCommander", () => {
     await encounterCommander.LoadSavedEncounter(savedEncounter);
 
     expect(encounter.Combatants()[1].DisplayName()).toEqual("Library Gregorr");
+  });
+
+  describe("Nimble phase commands", () => {
+    test("GroupAllMonsters does nothing with fewer than two monsters", () => {
+      addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Lone Monster"
+      });
+      addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Player",
+        Player: "player"
+      });
+
+      encounterCommander.GroupAllMonsters();
+
+      expect(encounter.Combatants().every(c => c.InitiativeGroup() == null)).toBe(
+        true
+      );
+    });
+
+    test("GroupAllMonsters ties monster initiative together, ignoring companions and players", () => {
+      const monster1 = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Monster 1",
+        InitiativeModifier: 0
+      });
+      const monster2 = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Monster 2",
+        InitiativeModifier: 5
+      });
+      const companion = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Companion",
+        Player: "companion"
+      });
+      const player = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Player",
+        Player: "player"
+      });
+      monster2.Initiative(7);
+
+      encounterCommander.GroupAllMonsters();
+
+      expect(monster1.InitiativeGroup()).not.toBeNull();
+      expect(monster1.InitiativeGroup()).toEqual(monster2.InitiativeGroup());
+      expect(monster1.Initiative()).toEqual(monster2.Initiative());
+      expect(companion.InitiativeGroup()).toBeNull();
+      expect(player.InitiativeGroup()).toBeNull();
+    });
+
+    test("SwapPhaseOrder moves companions with the players, not the monsters", () => {
+      const player = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Player",
+        Player: "player"
+      });
+      const companion = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Companion",
+        Player: "companion"
+      });
+      const monster = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Monster"
+      });
+      encounter.SortByPhase();
+      expect(encounter.Combatants()).toEqual([player, companion, monster]);
+
+      encounterCommander.SwapPhaseOrder();
+
+      expect(encounter.MonstersActFirst()).toBe(true);
+      expect(encounter.Combatants()).toEqual([monster, player, companion]);
+    });
+
+    test("ToggleAllMonstersHidden hides/reveals monsters, respects a locked monster, and never touches companions or players", () => {
+      const monster1 = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Monster 1"
+      });
+      const lockedMonster = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Locked Monster"
+      });
+      const companion = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Companion",
+        Player: "companion"
+      });
+      const player = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Name: "Player",
+        Player: "player"
+      });
+
+      const lockedMonsterViewModel = trackerViewModel
+        .CombatantViewModels()
+        .find(c => c.Combatant === lockedMonster);
+      trackerViewModel.CombatantCommander.Select(lockedMonsterViewModel);
+      trackerViewModel.CombatantCommander.ToggleKeepHidden();
+
+      encounterCommander.ToggleAllMonstersHidden();
+
+      expect(monster1.Hidden()).toBe(true);
+      expect(lockedMonster.Hidden()).toBe(true);
+      expect(companion.Hidden()).toBe(false);
+      expect(player.Hidden()).toBe(false);
+
+      encounterCommander.ToggleAllMonstersHidden();
+
+      expect(monster1.Hidden()).toBe(false);
+      expect(lockedMonster.Hidden()).toBe(true);
+      expect(companion.Hidden()).toBe(false);
+      expect(player.Hidden()).toBe(false);
+    });
   });
 
   describe("Index Labelling and Saved Encounters", () => {

@@ -50,7 +50,7 @@ function GetIndexLabel(combatant: Combatant): number | undefined {
   }
   if (
     CurrentSettings().Rules.AlwaysNumberMonsters &&
-    !combatant.IsPlayerCharacter()
+    !combatant.ActsInPlayerPhase()
   ) {
     return combatant.IndexLabel();
   }

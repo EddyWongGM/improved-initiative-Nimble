@@ -148,5 +148,15 @@ describe("Index labeling", () => {
       const combatant = addCombatantFromStatBlock(encounter, statBlock);
       expect(combatant.DisplayName()).toEqual("Fenwick");
     });
+
+    test("Companions are not numbered, same as player characters", () => {
+      const statBlock = {
+        ...StatBlock.Default(),
+        Name: "Wolf",
+        Player: "companion"
+      };
+      const combatant = addCombatantFromStatBlock(encounter, statBlock);
+      expect(combatant.DisplayName()).toEqual("Wolf");
+    });
   });
 });

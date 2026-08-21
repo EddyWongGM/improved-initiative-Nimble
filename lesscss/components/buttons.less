@@ -161,6 +161,16 @@ button.button {
   color: rgb(30, 150, 60);
 }
 
+.c-button--reset-turns {
+  .colors(var(--text-inverted), rgb(0, 120, 220), rgb(0, 120, 220));
+
+  &:hover {
+    color: var(--text-inverted);
+    background-color: rgb(0, 96, 176);
+    border-color: rgb(0, 96, 176);
+  }
+}
+
 .condition-reference,
 .rollable,
 .spell-reference {

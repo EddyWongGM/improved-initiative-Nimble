@@ -27,6 +27,24 @@ export const BuildEncounterCommandList = (
       defaultShowOnActionBar: false
     }),
     new Command({
+      id: "group-all-monsters",
+      description: "Group Monsters",
+      actionBinding: c.GroupAllMonsters,
+      fontAwesomeIcon: "object-group"
+    }),
+    new Command({
+      id: "swap-phase-order",
+      description: "Swap Phase Order",
+      actionBinding: c.SwapPhaseOrder,
+      fontAwesomeIcon: "exchange-alt"
+    }),
+    new Command({
+      id: "toggle-all-monsters-hidden",
+      description: "Hide/Reveal All Monsters",
+      actionBinding: c.ToggleAllMonstersHidden,
+      fontAwesomeIcon: "eye-slash"
+    }),
+    new Command({
       id: "end-encounter",
       description: "End Encounter",
       actionBinding: c.EndEncounter,

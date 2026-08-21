@@ -165,6 +165,14 @@ export const BuildCombatantCommandList: (
     defaultShowInCombatantRow: true
   }),
   new Command({
+    id: "toggle-keep-hidden",
+    description: "Lock Hidden (ignore Reveal All Monsters)",
+    actionBinding: c.ToggleKeepHidden,
+    fontAwesomeIcon: "lock",
+    defaultShowOnActionBar: false,
+    defaultShowInCombatantRow: true
+  }),
+  new Command({
     id: "toggle-reveal-ac",
     description: "Reveal/Hide AC in Player View",
     actionBinding: c.ToggleRevealedAC,

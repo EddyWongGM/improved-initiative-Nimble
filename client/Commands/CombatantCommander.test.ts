@@ -53,6 +53,55 @@ describe("CombatantCommander", () => {
     expect(playerView.Combatants).toHaveLength(0);
   });
 
+  test("Toggle Keep Hidden", () => {
+    encounter.AddCombatantFromStatBlock(StatBlock.Default());
+    const combatantViewModel = trackerViewModel.CombatantViewModels()[0];
+
+    expect(combatantViewModel.Combatant.KeepHidden()).toBe(false);
+
+    combatantCommander.Select(combatantViewModel);
+    combatantCommander.ToggleKeepHidden();
+    expect(combatantViewModel.Combatant.KeepHidden()).toBe(true);
+
+    combatantCommander.ToggleKeepHidden();
+    expect(combatantViewModel.Combatant.KeepHidden()).toBe(false);
+  });
+
+  test("Toggle Reveal Gold", () => {
+    encounter.AddCombatantFromStatBlock({
+      ...StatBlock.Default(),
+      Player: "player"
+    });
+    const combatantViewModel = trackerViewModel.CombatantViewModels()[0];
+
+    expect(combatantViewModel.Combatant.RevealedGold()).toBe(false);
+
+    combatantCommander.Select(combatantViewModel);
+    combatantCommander.ToggleRevealedGold();
+    expect(combatantViewModel.Combatant.RevealedGold()).toBe(true);
+
+    combatantCommander.ToggleRevealedGold();
+    expect(combatantViewModel.Combatant.RevealedGold()).toBe(false);
+  });
+
+  test("Toggle Reveal Hit Dice", () => {
+    encounter.AddCombatantFromStatBlock({
+      ...StatBlock.Default(),
+      Player: "player",
+      HitDice: { Value: 2, Notes: "" }
+    });
+    const combatantViewModel = trackerViewModel.CombatantViewModels()[0];
+
+    expect(combatantViewModel.Combatant.RevealedHitDice()).toBe(true);
+
+    combatantCommander.Select(combatantViewModel);
+    combatantCommander.ToggleRevealedHitDice();
+    expect(combatantViewModel.Combatant.RevealedHitDice()).toBe(false);
+
+    combatantCommander.ToggleRevealedHitDice();
+    expect(combatantViewModel.Combatant.RevealedHitDice()).toBe(true);
+  });
+
   test("Toggle Reveal AC", () => {
     encounter.AddCombatantFromStatBlock(StatBlock.Default());
     const combatantViewModel = trackerViewModel.CombatantViewModels()[0];

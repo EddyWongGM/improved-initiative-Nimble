@@ -308,6 +308,24 @@ export class CombatantViewModel {
     }
   }
 
+  public ToggleKeepHidden() {
+    if (this.Combatant.KeepHidden()) {
+      this.Combatant.KeepHidden(false);
+      this.LogEvent(`${this.Name()} no longer locked hidden.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantKeepHiddenUnlocked, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.KeepHidden(true);
+      this.LogEvent(
+        `${this.Name()} locked hidden - "Reveal All Monsters" won't reveal them.`
+      );
+      Metrics.TrackEvent(Metrics.Event.CombatantKeepHiddenLocked, {
+        name: this.Name()
+      });
+    }
+  }
+
   public ToggleRevealedAC() {
     if (this.Combatant.RevealedAC()) {
       this.Combatant.RevealedAC(false);

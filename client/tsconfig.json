@@ -5,7 +5,8 @@
     "target": "es5",
     "noImplicitThis": true,
     "jsx": "react",
-    "lib": ["esnext", "dom"]
+    "lib": ["esnext", "dom"],
+    "skipLibCheck": true
   },
   "exclude": ["**/*.test.ts", "**/*.test.tsx"]
 }

@@ -661,7 +661,10 @@ export class CombatantCommander {
 
   private pendingLinkInitiative = ko.observable<PendingLinkInitiative>(null);
 
-  private linkCombatantInitiatives = (combatants: CombatantViewModel[]) => {
+  private linkCombatantInitiatives = (
+    combatants: CombatantViewModel[],
+    resort = true
+  ) => {
     this.pendingLinkInitiative(null);
     const highestInitiative = combatants
       .map(c => c.Combatant.Initiative())
@@ -674,8 +677,22 @@ export class CombatantCommander {
     });
     this.tracker.Encounter.CleanInitiativeGroups();
 
-    this.tracker.Encounter.SortByInitiative();
+    if (resort) {
+      this.tracker.Encounter.SortByInitiative();
+    }
     Metrics.TrackEvent(Metrics.Event.InitiativeLinked);
+  };
+
+  public GroupCombatants = (combatants: CombatantViewModel[]) => {
+    if (combatants.length < 2) {
+      return;
+    }
+
+    // Skip the usual Dex-bonus-ranked resort - grouping combatants together
+    // (e.g. "Group Monsters") should preserve their existing manual/drag
+    // order, only clustering them into a contiguous phase block.
+    this.linkCombatantInitiatives(combatants, false);
+    this.tracker.Encounter.SortByPhase();
   };
 
   public LinkInitiative = () => {
@@ -756,6 +773,14 @@ export class CombatantCommander {
     }
 
     this.SelectedCombatants().forEach(c => c.ToggleHidden());
+  };
+
+  public ToggleKeepHidden = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleKeepHidden());
   };
 
   public ToggleRevealedAC = () => {

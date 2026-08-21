@@ -720,3 +720,551 @@ and are unchanged.
 Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
 pre-existing unrelated errors) and `npx jest --config client/jest.config.js`
 (128/128 runnable tests pass, same baseline).
+
+## Monster grouping + phase-order swap — implementation log (done)
+
+Nimble doesn't use per-creature fixed initiative — a side (players or
+monsters) acts as a phase, in whatever order that side likes, and which side
+goes first can flip. Rather than replace the existing D&D-style numeric
+initiative sort (a bigger rework, deferred), this reuses it: two toolbar
+commands sit on top of the existing sort.
+
+- **"Group Monsters"** (`EncounterCommander.GroupAllMonsters`,
+  [EncounterCommander.ts](client/Commands/EncounterCommander.ts)) — one click,
+  no manual selection needed. Filters `tracker.CombatantViewModels()` to
+  non-PCs and feeds them into a newly-exposed
+  `CombatantCommander.GroupCombatants`
+  ([CombatantCommander.tsx](client/Commands/CombatantCommander.tsx)), a thin
+  public wrapper around the existing private `linkCombatantInitiatives` (the
+  same logic already used by the multi-select "Link Initiative" command):
+  sets every monster to the same (highest) initiative and a shared
+  `InitiativeGroup`, so the existing sort tiebreak
+  (`IsPlayerCharacter() ? 0 : 1`) clusters them into one visual block.
+- **"Swap Phase Order"** (`EncounterCommander.SwapPhaseOrder`) — toggles a new
+  `Encounter.MonstersActFirst` observable
+  ([Encounter.ts](client/Encounter/Encounter.ts)) and re-sorts. The sort
+  tiebreak that used to always be `c.IsPlayerCharacter() ? 0 : 1` is now
+  `c.IsPlayerCharacter() !== monstersActFirst ? 0 : 1`, so toggling flips
+  which side's block sorts first without touching anyone's actual
+  `Initiative` value.
+- **Persistence** — `EncounterState.MonstersActFirst?: boolean`
+  ([common/EncounterState.ts](common/EncounterState.ts)), defaults `false`,
+  written in `Encounter.ObservableEncounterState` (and inherited by
+  `FullEncounterState`, which spreads it) and restored in
+  `Encounter.LoadEncounterState` via `?? false` — no legacy-migration entry
+  needed since it's read with a nullish-coalescing default inline, the same
+  pattern already used there for `BackgroundImageUrl`/`SaveEncounterDefaults`.
+- **UI** — both are `BuildEncounterCommandList.ts` toolbar commands (`object-group`
+  / `exchange-alt` icons), always visible regardless of selection (unlike
+  `CombatantCommander` commands, which the toolbar only shows when a combatant
+  is selected). A small "Monsters act first" indicator appears in
+  [InitiativeList.tsx](client/InitiativeList/InitiativeList.tsx)'s header when
+  the flag is set, styled via `.initiative-list__phase-indicator` in
+  [combatants.less](lesscss/components/combatants.less).
+- Two `Metrics.Event` entries added: `MonstersGrouped`, `PhaseOrderSwapped`
+  ([Metrics.ts](client/Utility/Metrics.ts)).
+
+Not built, deliberately deferred: replacing numeric initiative with a real
+two-phase turn engine (freeform order within a phase, phase-by-phase
+turn-advance) — see the scope discussion that preceded this feature; this
+lighter approach was chosen instead.
+
+### Bug fix: Swap Phase Order did nothing with mixed stat blocks
+
+The phase tiebreak above was originally placed *last* in the sort iteratee
+list (after `-Initiative`, `-groupBonus`, `-InitiativeBonus`). Initiative
+Bonus is dexterity modifier + the stat block's initiative modifier, which
+differs per creature — with any real stat blocks (not all defaulted to the
+same Dex score), the first three keys already produce a full, tie-free
+ordering, so the phase key at position 4 never got a chance to apply.
+Reported symptom: 5 PCs + 4 monsters, all with normal (differing) ability
+scores — pressing "Swap Phase Order" visibly did nothing.
+
+Fixed by promoting the phase key to *first* in the iteratee list
+([Encounter.ts](client/Encounter/Encounter.ts)), with Initiative/group
+bonus/individual bonus demoted to sub-ordering *within* a phase. This makes
+phase membership the dominant sort axis unconditionally (not just a
+same-values tiebreak), so PCs and monsters always end up in two contiguous
+blocks and the swap always visibly flips which block is on top — matching
+how Nimble actually works (there's no cross-side numeric priority to begin
+with). This is a behavior change beyond just the new toggle: even the
+*default* (non-swapped) order previously allowed a fast monster to sort
+ahead of a slow PC; now PCs and monsters are always split into two blocks,
+Initiative/Dex differences only matter for ordering within a side.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing
+unrelated errors) and `npx jest --config client/jest.config.js` (138/138
+runnable tests pass, same baseline).
+
+### Follow-up: swapping/grouping was still ranking combatants by Dex within a phase
+
+Reported symptom: adding several PCs, then monsters, then pressing "Swap
+Phase Order" moved the monster block above the players as expected, but
+within that block the monsters (and separately the players) came out
+ordered by their initiative bonus (Dex modifier), not by whatever order they
+were added/arranged in.
+
+Root cause: the previous fix promoted the phase key to *first* priority in
+`getCombatantSortIteratees`, but `ToggleMonstersActFirst` still called the
+general `SortByInitiative()`, whose remaining keys (`-Initiative`,
+`-groupBonus`, `-InitiativeBonus`) are real, tested, load-bearing behavior
+for the plain "Start Encounter" flow (`Initiative Ordering › By modifier` /
+`By group modifier` tests rely on exactly this to auto-rank tied-initiative
+creatures by Dex) — so they couldn't just be deleted without breaking that
+flow. But reusing the same comparator meant every phase-swap/group action
+also re-ranked people by Dex as a side effect, which isn't how Nimble works
+(no cross-creature ordering; the DM/players choose their own order within a
+side) and isn't what was wanted here.
+
+Fix: reverted `getCombatantSortIteratees` to its original key order (Dex-bonus
+tiebreak restored, phase demoted back to a low-priority tiebreak — used only
+by the general `SortByInitiative`/`StartEncounter` path), and added a
+dedicated `Encounter.SortByPhase()`
+([Encounter.ts](client/Encounter/Encounter.ts)) that does a plain lodash
+`partition` of the current combatant array into two phase blocks (respecting
+`MonstersActFirst`) with **no other sort keys at all** — partition preserves
+each bucket's existing relative order by construction, so it's a pure
+"move this block above/below that block" operation.
+
+- `Encounter.ToggleMonstersActFirst` now calls `SortByPhase()` instead of
+  `SortByInitiative()`.
+- `CombatantCommander.linkCombatantInitiatives`
+  ([CombatantCommander.tsx](client/Commands/CombatantCommander.tsx)) gained an
+  optional `resort` parameter (default `true`, preserving the existing
+  "Link Initiative" command's Dex-ranked resort exactly as before).
+  `GroupCombatants` (the wrapper "Group Monsters" calls into) now passes
+  `resort: false` and calls `Encounter.SortByPhase()` itself afterward, so
+  grouping monsters together no longer re-ranks them by Dex along the way.
+
+Net effect: the plain "Start Encounter" flow (no phase feature involved)
+keeps its original Dex-bonus tiebreak behavior untouched; "Swap Phase Order"
+and "Group Monsters" both now purely reposition blocks, preserving whatever
+manual/drag order was already there.
+
+Added a regression test (`MonstersActFirst › Swapping preserves manual order
+within a side, even with differing initiative modifiers`) that adds a player
+then a slow monster then a fast monster, toggles phase order, and asserts
+the fast monster does NOT jump ahead of the slow one.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing
+unrelated errors) and `npx jest --config client/jest.config.js` (139/139
+runnable tests pass - 138 baseline + 1 new regression test; same 8
+pre-existing `remark-breaks` parse failures as baseline).
+
+## Hide/Reveal All Monsters — implementation log (done)
+
+A DM-facing bulk version of the existing per-combatant `Hidden` toggle
+("Hide/Reveal in Player View", already used for individual monsters and for
+`hideOnAdd` when quick-adding), so the whole monster side can be pulled out
+of Player View at once (e.g. before a reveal/ambush) and put back with one
+click, instead of clicking each monster row individually.
+
+- **`EncounterCommander.ToggleAllMonstersHidden`**
+  ([EncounterCommander.ts](client/Commands/EncounterCommander.ts)) - filters
+  `tracker.CombatantViewModels()` to non-PCs (same filter used by
+  `GroupAllMonsters`/`CleanEncounter`) and sets every one's
+  `Combatant.Hidden` to the same value. Direction is computed, not tracked as
+  separate state: if *every* monster is already hidden, the action reveals
+  all of them; otherwise (some or none hidden) it hides all of them. This
+  gives an intuitive checkbox-style cycle (hide all → reveal all → hide
+  all...) and self-heals a mixed state (some monsters individually hidden
+  already) by hiding the rest first, rather than needing a separate stored
+  flag that could drift from the individual `Hidden` values.
+- Reuses the existing `Combatant.Hidden` observable and
+  `getCombatantsForPlayerView`'s existing `c.Hidden()` filter
+  ([Encounter.ts](client/Encounter/Encounter.ts)) - no new data model, no new
+  `EncounterState` field, nothing to persist beyond what individual `Hidden`
+  toggles already persist per combatant.
+- **UI** - one more `BuildEncounterCommandList.ts` toolbar command
+  (`eye-slash` icon, "Hide/Reveal All Monsters"), always visible like Group
+  Monsters/Swap Phase Order.
+- Two `Metrics.Event` entries: `AllMonstersHidden`, `AllMonstersRevealed`
+  ([Metrics.ts](client/Utility/Metrics.ts)).
+
+Not tested with an automated test: `EncounterCommander.test.ts` (like
+`CombatantCommander.test.ts`) is one of the 8 suites that fail to parse in
+this environment due to the pre-existing `remark-breaks`/Jest-transform
+issue unrelated to this change (its import chain pulls in
+`TrackerViewModel.tsx` → ... → `TextEnricher.tsx`), so it can't currently run
+here regardless. Verified instead via `npx tsc --noEmit -p
+client/tsconfig.json` (same 7 pre-existing unrelated errors, no new ones)
+and a full `npx jest --config client/jest.config.js` run (139/139 runnable
+tests still pass, same 8 pre-existing parse failures as baseline - no
+regressions).
+
+### Follow-up: "Reveal All Monsters" shouldn't be able to un-hide a monster the DM wants to stay hidden
+
+Raised concern: `ToggleAllMonstersHidden`'s reveal branch unconditionally set
+`Hidden(false)` on every monster, so a monster the DM had deliberately kept
+hidden (e.g. an undetected ambusher, while the rest of the encounter is
+visible) got revealed anyway the next time "Reveal All Monsters" was
+pressed. Wanted a second, independent layer: an explicit per-monster lock
+that bulk-reveal always respects, distinct from the plain `Hidden` toggle
+(which bulk actions *are* allowed to flip).
+
+Added `KeepHidden`, mirroring the existing `Hidden`/`RevealedAC` boolean
+plumbing exactly:
+
+- **Data model** — `CombatantState.KeepHidden?: boolean`
+  ([common/CombatantState.ts](common/CombatantState.ts)), default `false`
+  (no legacy migration needed - unlike `RevealedGold`/`RevealedHitDice`,
+  which need `true` as their legacy-load default but `false` for newly
+  constructed combatants, `KeepHidden` is `false` in both cases, so the
+  inline `?? false` in `processCombatantState` covers both).
+- **Per-combatant tracking** — `Combatant.KeepHidden` observable
+  ([Combatant.ts](client/Combatant/Combatant.ts)), seeded via `?? false`,
+  serialized in `GetState()`. `CombatantViewModel.ToggleKeepHidden()`
+  ([CombatantViewModel.ts](client/Combatant/CombatantViewModel.ts)) logs the
+  change and tracks new `CombatantKeepHiddenLocked`/
+  `CombatantKeepHiddenUnlocked` metrics.
+- **Command** — `CombatantCommander.ToggleKeepHidden`
+  ([CombatantCommander.tsx](client/Commands/CombatantCommander.tsx)),
+  registered as a per-row command ("Lock Hidden (ignore Reveal All
+  Monsters)", `lock` icon, `defaultShowInCombatantRow: true`) in
+  [BuildCombatantCommandList.ts](client/Commands/BuildCombatantCommandList.ts) -
+  sits alongside the existing "Hide/Reveal in Player View" eye-icon button,
+  same row-command rendering mechanism (`CommandButton` in
+  [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx)), no new
+  plumbing needed there.
+- **`ToggleAllMonstersHidden` updated**
+  ([EncounterCommander.ts](client/Commands/EncounterCommander.ts)): the
+  reveal branch now filters out `KeepHidden` combatants before setting
+  `Hidden(false)`, so a locked monster stays hidden through "Reveal All"
+  regardless of how many times it's pressed. "Hide All" is unaffected by the
+  lock either way (hiding an already-locked-hidden monster is a no-op).
+
+Not tested with an automated test for the same reason as the parent
+feature - `EncounterCommander.test.ts` can't currently run in this
+environment. Verified with `npx tsc --noEmit -p client/tsconfig.json` (same
+7 pre-existing unrelated errors, no new ones) and a full `npx jest --config
+client/jest.config.js` run (139/139 runnable tests pass, same 8
+pre-existing parse failures as baseline - no regressions).
+
+## Companion category — implementation log (done)
+
+Raised question: the app only distinguished Player Character vs "everything
+else" (`StatBlock.Player == "player"` vs not). A player's companion/sidekick
+(a real Nimble mechanic - pets, hirelings) had nowhere to go: it would sort
+into the monster phase block, get swept up by "Group Monsters"/"Hide All
+Monsters", and get removed by "Clean Encounter" along with actual enemies.
+
+Decision (confirmed before building): companions are monster-shaped, not
+PC-shaded - they don't get Wounds/Gold/Hit Dice, the Level-vs-Challenge
+label, or PC-style HP rolling, and don't affect the Difficulty calculator
+differently than before. The *only* things that change for a companion are
+the ones that matter for "which side is this creature on": phase placement,
+and exclusion from the bulk "monster" actions (Group Monsters, Hide/Reveal
+All Monsters, Clean Encounter).
+
+1. **Data model / predicates** — `StatBlock.Player` gets a third valid value,
+   `"companion"` ([common/StatBlock.ts](common/StatBlock.ts)). Added
+   `StatBlock.IsCompanion` and `StatBlock.ActsInPlayerPhase` (`IsPlayerCharacter
+   || IsCompanion`). **Tightened** `StatBlock.IsPlayerCharacter` from
+   `Player.length > 0` to `Player == "player"` - required so a companion
+   isn't accidentally treated as a PC by every one of the ~12 files calling
+   this helper (Wounds/Gold/HitDice gating, HP-roll mode, Level/Challenge
+   label, Difficulty calc, etc.). Safe: the only legacy values this field
+   has ever held are `""`, `"player"`, and `"npc"` (already normalized to
+   `""` on import, see `Encounter.ts`'s `ImportEncounter`), and all three
+   already behaved identically under both the old `.length > 0` check and
+   the new `== "player"` check - only the newly-introduced `"companion"`
+   value's behavior actually changes.
+2. **Combatant computeds** — `Combatant.IsCompanion` and
+   `Combatant.ActsInPlayerPhase`
+   ([Combatant.ts](client/Combatant/Combatant.ts)), mirroring the existing
+   `IsPlayerCharacter` computed pattern.
+3. **Phase placement** — `Encounter.ts`'s sort-tiebreak key and `SortByPhase`
+   now key off `c.ActsInPlayerPhase()` instead of `c.IsPlayerCharacter()`, so
+   companions cluster with the players for "Swap Phase Order"/"Group
+   Monsters" purposes.
+4. **Bulk "monster" actions updated** to exclude companions
+   ([EncounterCommander.ts](client/Commands/EncounterCommander.ts)):
+   `GroupAllMonsters`, `ToggleAllMonstersHidden`, and `CleanEncounter` (which
+   actually *removes* combatants - "Remove NPCs and end encounter" - so a
+   companion surviving this was the most consequential of the three) all
+   switched their `!c.Combatant.IsPlayerCharacter()` filter to
+   `!c.Combatant.ActsInPlayerPhase()`. `RestoreAllPlayerCharacterHP` and the
+   post-combat `CombatStats` collection were deliberately left PC-only
+   (unchanged) - both are explicitly about player characters specifically,
+   not "your side" in general, and companions may have different
+   HP-restoration semantics than PCs.
+5. **Import routing fix** —
+   [TrackerViewModel.tsx](client/TrackerViewModel.tsx)'s
+   `editImportedStatBlock` used to route by `statBlock.Player == ""` (empty
+   → library/monster import, anything else → persistent-character import).
+   An imported companion JSON would have been misrouted into the
+   persistent-character importer. Changed to
+   `!StatBlock.IsPlayerCharacter(statBlock)`, so `""` and `"companion"` both
+   correctly route to the library importer and only `"player"` routes to the
+   PC importer.
+6. **UI** — [StatBlockEditor.tsx](client/StatBlockEditor/StatBlockEditor.tsx)'s
+   existing `EnumToggle` for `Player` (previously shown only for
+   `editorTarget == "persistentcharacter"`, cycling `""`/`"player"`) gained a
+   sibling toggle shown for `editorTarget == "library"` or `"combatant"`,
+   cycling `""`/`"companion"` ("Monster/NPC" / "Companion"). This lets a DM
+   either mark a reusable library stat block as a companion template, or
+   flip one specific in-combat instance to companion via Quick Edit, without
+   touching the dedicated PC-creation flow at all.
+
+Added a regression test (`MonstersActFirst › Companions sort with players,
+not monsters`) covering both the default order and the swapped order with a
+monster, a companion, and a player all present.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors, no new ones) and `npx jest --config
+client/jest.config.js` (140/140 runnable tests pass - 139 baseline + 1 new
+test; same 8 pre-existing `remark-breaks` parse failures as baseline).
+
+## Test-coverage review, and unblocking the 8 pre-existing parse failures
+
+Asked to review whether the phase/group/hide-all/companion features built
+across this session needed more test coverage. Several of them
+(`GroupAllMonsters`, `SwapPhaseOrder`, `ToggleAllMonstersHidden`,
+`ToggleKeepHidden`, and the companion exclusion from bulk "monster" actions)
+live in `EncounterCommander.ts`/`CombatantCommander.tsx`, whose test files
+were among the 8 suites that couldn't run at all in this environment - not
+because of anything in this session's changes, but a pre-existing Jest
+transform failure: `remark-breaks@4` ships pure ESM
+(`export {default} from './lib/index.js'`), which Jest's CommonJS loader
+can't parse, and anything importing it (transitively, via
+`TextEnricher.tsx`) crashed at import time.
+
+That was fixable cheaply and safely, following a pattern the project
+already uses (`react-markdown/lib/react-markdown` is already mocked for
+Jest the same way): added
+[client/test/remarkBreaksMock.ts](client/test/remarkBreaksMock.ts) (a
+no-op remark plugin - safe because the existing mocked `ReactMarkdown`
+component never actually invokes `remarkPlugins`) and mapped
+`^remark-breaks$` to it in
+[client/jest.config.js](client/jest.config.js)'s `moduleNameMapper`. This
+unblocked 7 of the 8 previously-failing suites (`CombatantCommander.test.ts`,
+`EncounterCommander.test.ts`, `TextEnricher.test.tsx`,
+`Components/StatBlock.test.tsx`, `PersistentCharacter.test.tsx`,
+`AutosavedEncounterTest.test.tsx`, `LibrariesCommander.rename.test.ts`) with
+no new failures in any of them.
+
+With `EncounterCommander.test.ts`/`CombatantCommander.test.ts` now runnable,
+added the coverage that was actually missing:
+
+- `EncounterCommander.test.ts` → new `"Nimble phase commands"` describe
+  block: `GroupAllMonsters` ties monster initiative together and clusters
+  them while leaving a companion's and a player's `InitiativeGroup` alone
+  (and does nothing when fewer than two monsters exist); `SwapPhaseOrder`
+  moves a companion with the players, not the monsters; `ToggleAllMonstersHidden`
+  hides then reveals all monsters, respects a `KeepHidden`-locked monster
+  through the reveal, and never touches a companion's or player's `Hidden`
+  state either way.
+- `CombatantCommander.test.ts` → new `"Toggle Keep Hidden"` test, mirroring
+  the existing `"Toggle Reveal AC"` test's shape.
+
+### Bonus finding: a stale, unrelated pre-2021 test, now exposed
+
+Unblocking `InitiativeList.test.tsx` (the 8th suite) revealed 2 *genuine*
+test failures, unrelated to anything built this session -
+`git log` shows this test (`"Shows a pause/play icon when encounter is
+active/inactive"`, looking for a `data-testid="encounter-state-icon"`)
+dates to commit `bc3af9b8` from 2021, an Enzyme→React Testing Library
+migration. The current `InitiativeList.tsx` header has no such icon at all
+(likely moved to the toolbar's `start-encounter`/`end-encounter` commands,
+which do carry `play`/`stop` icons, at some point since) - so the test has
+been silently broken since then, just invisible because it was previously
+masked by the `remark-breaks` parse crash on this same suite. Left
+untouched pending a decision on the right fix (re-add the icon? point the
+test at the toolbar commands instead? delete it?) rather than guessing at
+intent for an 8-year-old test.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors, no new ones - see
+[KNOWN-TYPE-ERRORS.md](KNOWN-TYPE-ERRORS.md)) and `npx jest --config
+client/jest.config.js` (198/202 tests pass, 2 todo, 2 failing - only the
+pre-2021 `InitiativeList.test.tsx` failures above; up from 140/140 with 8
+whole suites unable to run before this fix).
+
+### Filling the gaps the coverage review found
+
+Followed up by writing the missing tests the review above identified,
+ranked by risk:
+
+- **Sign-convention/clamp regression tests** for every `Apply*Change`
+  method on `Combatant.ts`: `ApplyResourcesChange`/`ApplyHitDiceChange`
+  (spend-from-Temporary-first, spillover, clamp to `0..max` - previously
+  untested despite mirroring the already-tested `ApplyManaChange`) and
+  `ApplyGoldChange` (the `+amount = add` convention, floored at `0` with
+  **no** ceiling - the same sign-convention shape that needed a real bug
+  fix once for Wounds, but had zero test coverage of its own). Also added
+  an `ApplyManaChange` clamp-to-max test, since restoring past full wasn't
+  covered by any existing resource's tests.
+- **`ToPlayerViewCombatantState.ts` display-gating tests** (in
+  [Combatant.test.ts](client/Combatant/Combatant.test.ts) - no dedicated
+  file exists for this module, tests live alongside the existing HP-display
+  tests): Mana's PC-vs-monster verbosity split and "max is DM-only" hiding;
+  Hit Dice's three-way gate (`MaxHitDice` undefined for non-PCs,
+  `RevealedHitDice` lock, "hidden while full"); Wounds' "hidden until first
+  wound taken" gate; Gold's `IsPlayerCharacter() && RevealedGold()`
+  double-gate. This was the single riskiest gap found - boolean-combination
+  gating logic with no coverage at all.
+- **Persistent tags → `PersistentCharacter` sync** test: pushes one
+  non-duration and one duration tag onto a persistent-character combatant
+  and asserts only the non-duration one reaches `updatePersistentCharacter`.
+- **`RevealedGold`/`RevealedHitDice` toggle commands** in
+  [CombatantCommander.test.ts](client/Commands/CombatantCommander.test.ts),
+  mirroring the existing "Toggle Reveal AC"/"Toggle Keep Hidden" tests that
+  sat right next to an untested gap.
+- **`common/StatBlock.ts` predicates** got a dedicated new file,
+  [client/Combatant/StatBlock.test.ts](client/Combatant/StatBlock.test.ts)
+  (placed under `client/` since Jest's `rootDir` for this project is
+  `client/` - a file directly under `common/` would never be discovered) -
+  `IsPlayerCharacter`, `IsCompanion`, `ActsInPlayerPhase` each get positive
+  and negative cases, including the legacy `"npc"` value.
+- **A non-obvious `SortByInitiative`-vs-`SortByPhase` distinction**, added
+  to `Encounter.test.ts`'s `"Initiative Ordering"` block: `SortByInitiative`
+  (used by `StartEncounter`) ranks a companion by its own initiative
+  modifier first, same as any other creature - phase is only a tiebreak for
+  equal modifiers - unlike `SortByPhase` (used by "Swap Phase
+  Order"/"Group Monsters"), which always keeps a companion with the
+  players regardless of modifiers. Two tests cover both branches (modifiers
+  differ vs. modifiers tie) so this intentional divergence between the two
+  sort paths doesn't silently regress into "companions always win" or
+  "companions never win."
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (0 errors, thanks
+to `skipLibCheck`) and `npx jest --config client/jest.config.js` (233/237
+tests pass, 2 todo, same 2 pre-2021 `InitiativeList.test.tsx` failures as
+before - 35 new tests added, all passing, zero regressions).
+
+### Bug fix: a companion got auto-numbered by "Always number Creatures and NPCs"
+
+Reported symptom: adding a companion to the encounter gave it a number
+(e.g. "Wolf 1") the same as a monster would under the `AlwaysNumberMonsters`
+setting, even with only one companion present - companions were expected to
+behave like player characters here (never auto-numbered unless an actual
+name collision exists), not like monsters.
+
+Root cause: four call sites implement "is this a monster, for numbering
+purposes" as `!combatant.IsPlayerCharacter()` - which, after
+`IsPlayerCharacter` was tightened to `Player == "player"` for the Companion
+feature, now includes companions (`Player == "companion"` is not
+`"player"`, so `!IsPlayerCharacter()` is `true` for a companion, same as for
+an actual monster). These were never updated to the newer
+`ActsInPlayerPhase` predicate when Companion was added, unlike the sort/bulk-
+action call sites that were.
+
+Fixed all four to use `ActsInPlayerPhase()`/`StatBlock.ActsInPlayerPhase`
+instead of `IsPlayerCharacter()`/`StatBlock.IsPlayerCharacter`:
+
+- `Combatant.UpdateIndexLabel` ([Combatant.ts](client/Combatant/Combatant.ts)) -
+  assigns/collision-checks index numbers among monsters.
+- `Combatant.DisplayName` (same file) - decides whether to append the
+  number to the rendered name.
+- `ToPlayerViewCombatantState`'s `GetIndexLabel`
+  ([ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts)) -
+  the Player-View-facing equivalent.
+- `InitiativeList.tsx`'s inline `isMonster` check that feeds
+  `showIndexLabel` on the DM's own initiative-list row.
+
+Added regression tests: `IndexLabeling.test.ts` gained "Companions are not
+numbered, same as player characters" (mirroring the existing PC test right
+next to it), and `Combatant.test.ts` gained a
+`ToPlayerViewCombatantState`-level test confirming `IndexLabel` stays
+`undefined` for a companion under `AlwaysNumberMonsters`.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (0 errors) and
+`npx jest --config client/jest.config.js` (235/239 tests pass, 2 todo, same
+2 pre-2021 failures as before - 2 new tests added, all passing).
+
+## Companion Wounds, uniqueness, and persistence
+
+Three related asks: companions shouldn't need a second copy added when
+they're already in the encounter; a companion should be able to track
+Wounds and have its HP/Wounds persist across encounters, same as a PC;
+"Clean Encounter" shouldn't remove a companion.
+
+The third was already done (the earlier `ActsInPlayerPhase` fix to
+`CleanEncounter`'s filter). For the other two, rather than build a
+bespoke companion-specific uniqueness/persistence system, this leans on
+the **Persistent Character** ("Characters" library) mechanism the app
+already has - it turns out to be entirely `Player`-value-agnostic under
+the hood:
+
+- `PersistentCharacter.Initialize` ([common/PersistentCharacter.ts](common/PersistentCharacter.ts))
+  just wraps whatever `StatBlock` it's given (`Player: "companion"`
+  included) - no PC-forcing.
+- `Encounter.CanAddCombatant`/`AddCombatantFromPersistentCharacter`
+  ([Encounter.ts](client/Encounter/Encounter.ts)) key uniqueness purely off
+  `PersistentCharacterId`, and seed `CurrentHP`/`CurrentWounds`/etc.
+  generically from the `PersistentCharacter` record - no PC gating.
+- `Combatant.AttachToPersistentCharacterLibrary`'s subscriptions
+  (`CurrentHP`, `CurrentWounds`, etc. → `updatePersistentCharacter`) are
+  likewise generic.
+- The "Characters" library UI/reference-pane/save flow
+  ([LibrariesCommander.ts](client/Commands/LibrariesCommander.ts),
+  [PersistentCharacterLibraryReferencePane.tsx](client/Library/ReferencePane/PersistentCharacterLibraryReferencePane.tsx))
+  has zero `Player`-based filtering, and the tab is labeled generically
+  "Characters" ([Libraries.ts](client/Library/Libraries.ts)), not
+  "Player Characters" - so a companion showing up there isn't a mismatch.
+
+So the mechanism for "unique + persistent" already worked for a companion
+the moment one exists as a `PersistentCharacter`. What was actually
+missing:
+
+1. **No way to mark a Persistent Character as a companion.** The
+   `editorTarget == "persistentcharacter"` `Player` toggle in
+   [StatBlockEditor.tsx](client/StatBlockEditor/StatBlockEditor.tsx) only
+   cycled `""` (NPC) / `"player"` (PC). Added a third `"companion"` option
+   to the same toggle, so a DM can create/edit a Character and mark it a
+   Companion directly in the "Characters" tab.
+2. **Wounds was still hard-gated to `IsPlayerCharacter()`, excluding
+   companions**, at every layer: `Combatant.MaxWounds`
+   ([Combatant.ts](client/Combatant/Combatant.ts)) - the root cause, since
+   `ToPlayerViewCombatantState`'s `GetWoundsDisplay`/`GetWoundsColor` and
+   `CombatantViewModel.Wounds`/`WoundsPercentage` (and therefore
+   `CombatantDetails.tsx`'s Wounds row) all derive from it with no
+   separate check; plus three UI-only gates that don't go through
+   `MaxWounds`: the Wounds `ValueAndNotesField` in the `library`/`combatant`
+   stat block editor, the Wounds column visibility check in
+   [InitiativeList.tsx](client/InitiativeList/InitiativeList.tsx), and the
+   Wounds cell's own PC-check in
+   [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx). All four
+   switched from `IsPlayerCharacter()`/`Player == "player"` to
+   `ActsInPlayerPhase()`/`StatBlock.ActsInPlayerPhase`. Hit Dice and Gold
+   were deliberately left PC-only - not part of this ask, and Nimble
+   companions aren't expected to track those.
+
+Net effect: a DM creates/edits a stat block in the "Characters" tab,
+toggles it to "Companion," gives it a Wounds max - it now behaves exactly
+like a persistent PC (one copy per encounter, HP/Wounds sync back to the
+library record across encounters, survives "Clean Encounter"), while still
+being excluded from Gold/Hit Dice, the Level-vs-Challenge label, and
+Difficulty-calculator PC treatment, per the original Companion design.
+A companion added the *other* way - as a plain repeatable "Creature" in the
+Creatures/StatBlocks library, marked Companion via the `library`/`combatant`
+editor toggle - still gets Wounds tracking and phase/bulk-action treatment,
+but not automatic uniqueness/persistence, since it isn't backed by a
+`PersistentCharacter` record; this mirrors how a Creature marked "Player
+Character" already behaves today (no promotion tool was built for
+converting an existing non-persistent combatant into a Persistent
+Character - out of scope here; the DM manages this via the Characters tab
+from the start instead).
+
+Added regression tests:
+
+- `Combatant.test.ts`: a companion's `MaxWounds` reads from its statblock,
+  `WoundsDisplay` is hidden until first wound then shows the current value
+  - the same shape as the existing PC test.
+- `Encounter.test.ts` (new `"Persistent companions"` describe block): a
+  companion can only be added to an encounter once via
+  `AddCombatantFromPersistentCharacter` (second add returns `null`); a
+  companion's `CurrentHP`/`CurrentWounds` changes call
+  `updatePersistentCharacter` with the new values, same as a PC.
+- `EncounterCommander.test.ts`: `CleanEncounter` keeps a companion
+  (`IsPendingRemoval() == false`) while still removing a plain monster.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (0 errors) and
+`npx jest --config client/jest.config.js` (239/243 tests pass, 2 todo, same
+2 pre-2021 failures as before - 4 new tests added, all passing).
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing
+unrelated errors, no new ones) and `npx jest --config client/jest.config.js`
+(138/138 runnable tests pass — 128 baseline + 2 new tests covering the sort
+swap and save/load persistence of `MonstersActFirst`; same 8 pre-existing
+`remark-breaks` parse failures as baseline).
