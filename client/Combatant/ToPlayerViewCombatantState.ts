@@ -9,6 +9,7 @@ export function ToPlayerViewCombatantState(
   const sendImage = env.HasEpicInitiative;
   return {
     Name: combatant.DisplayName(),
+    IndexLabel: GetIndexLabel(combatant),
     Id: combatant.Id,
     HPDisplay: GetHPDisplay(combatant),
     HPColor: GetHPColor(combatant),
@@ -41,6 +42,18 @@ export function ToPlayerViewCombatantState(
     ReactionsSpent: combatant.ReactionsSpent(),
     HasTakenTurn: combatant.HasTakenTurn()
   };
+}
+
+function GetIndexLabel(combatant: Combatant): number | undefined {
+  if (combatant.Alias()) {
+    return undefined;
+  }
+  const name = combatant.StatBlock().Name;
+  const combatantCount = combatant.Encounter.CombatantCountsByName()[name];
+  if (combatantCount > 1) {
+    return combatant.IndexLabel();
+  }
+  return undefined;
 }
 
 function GetHPDisplay(combatant: Combatant): string {

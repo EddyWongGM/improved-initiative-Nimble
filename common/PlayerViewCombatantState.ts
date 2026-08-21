@@ -2,6 +2,7 @@ import { TagState } from "./CombatantState";
 
 export interface PlayerViewCombatantState {
   Name: string;
+  IndexLabel?: number;
   HPDisplay: string;
   HPColor: string;
   ManaDisplay?: string;

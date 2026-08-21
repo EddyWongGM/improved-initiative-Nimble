@@ -61,7 +61,12 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
           {this.props.combatant.HasTakenTurn && (
             <span className="combatant__has-taken-turn-icon fas fa-check" />
           )}
-          {this.props.combatant.Name}
+          {this.props.combatant.IndexLabel !== undefined && (
+            <strong className="combatant__index-label">
+              {this.props.combatant.IndexLabel}
+            </strong>
+          )}
+          {baseCombatantName(this.props.combatant)}
         </div>
         <div
           className={
@@ -152,4 +157,14 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
       </li>
     );
   }
+}
+
+function baseCombatantName(combatant: PlayerViewCombatantState): string {
+  if (combatant.IndexLabel === undefined) {
+    return combatant.Name;
+  }
+  const indexSuffix = ` ${combatant.IndexLabel}`;
+  return combatant.Name.endsWith(indexSuffix)
+    ? combatant.Name.slice(0, -indexSuffix.length)
+    : combatant.Name;
 }

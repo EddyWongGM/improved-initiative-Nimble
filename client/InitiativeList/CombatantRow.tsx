@@ -148,7 +148,7 @@ export function CombatantRow(props: CombatantRowProps) {
           }}
           aria-pressed={isSelected ? "true" : "false"}
         >
-          {displayName}
+          {renderDisplayName(props)}
         </button>
       </td>
 
@@ -561,9 +561,27 @@ function getDisplayName(props: CombatantRowProps) {
   if (props.combatantState.Alias?.length) {
     displayName = props.combatantState.Alias;
   } else if (props.showIndexLabel) {
-    displayName += " " + props.combatantState.IndexLabel;
+    displayName = props.combatantState.IndexLabel + " " + displayName;
   }
   return displayName;
+}
+
+function renderDisplayName(props: CombatantRowProps) {
+  const name = props.combatantState.Alias?.length
+    ? props.combatantState.Alias
+    : props.combatantState.StatBlock.Name;
+  const showIndexLabel =
+    props.showIndexLabel && !props.combatantState.Alias?.length;
+  return (
+    <>
+      {showIndexLabel && (
+        <strong className="combatant__index-label">
+          {props.combatantState.IndexLabel}
+        </strong>
+      )}
+      {name}
+    </>
+  );
 }
 
 function getHPStyle(props: CombatantRowProps) {

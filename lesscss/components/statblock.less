@@ -35,15 +35,15 @@
 }
 
 .c-combatant-details__hp {
-  .stat-label.Mana,
-  .stat-label.Level {
+  > * + .stat-label.Mana,
+  > * + .stat-label.Level {
     margin-left: @medium-spacer;
   }
 }
 
 .c-combatant-details__resources-wounds {
-  .stat-label.HitDice,
-  .stat-label.Wounds {
+  > * + .stat-label.HitDice,
+  > * + .stat-label.Wounds {
     margin-left: @medium-spacer;
   }
 }
