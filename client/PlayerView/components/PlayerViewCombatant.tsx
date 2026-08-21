@@ -10,6 +10,7 @@ interface PlayerViewCombatantProps {
   acColumnVisible: boolean;
   manaColumnVisible: boolean;
   resourcesColumnVisible: boolean;
+  hitDiceColumnVisible: boolean;
   woundsColumnVisible: boolean;
   goldColumnVisible: boolean;
   reactionTrackerVisible: boolean;
@@ -88,6 +89,16 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
             />
           </div>
         )}
+        {this.props.hitDiceColumnVisible && (
+          <div className="combatant__hitdice">
+            <span
+              style={{ color: this.props.combatant.HitDiceColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.HitDiceDisplay || ""
+              }}
+            />
+          </div>
+        )}
         {this.props.woundsColumnVisible && (
           <div className="combatant__wounds">
             <span
@@ -102,7 +113,10 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
           <div className="combatant__ac">{this.props.combatant.AC || ""}</div>
         )}
         {this.props.goldColumnVisible && (
-          <div className="combatant__gold">
+          <div
+            className="combatant__gold"
+            style={{ color: this.props.combatant.GoldColor }}
+          >
             {this.props.combatant.GoldDisplay || ""}
           </div>
         )}

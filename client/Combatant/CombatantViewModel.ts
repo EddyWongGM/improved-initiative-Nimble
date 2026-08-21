@@ -21,6 +21,8 @@ export class CombatantViewModel {
   public ManaPercentage: ko.PureComputed<string>;
   public Resources: ko.PureComputed<string>;
   public ResourcesPercentage: ko.PureComputed<string>;
+  public HitDice: ko.PureComputed<string>;
+  public HitDicePercentage: ko.PureComputed<string>;
   public Wounds: ko.PureComputed<string>;
   public WoundsPercentage: ko.PureComputed<string>;
   public Gold: ko.PureComputed<string>;
@@ -78,6 +80,22 @@ export class CombatantViewModel {
         Math.floor(
           (this.Combatant.CurrentResources() / maxResources) * 100
         ) + "%"
+      );
+    });
+    this.HitDice = ko.pureComputed(() => {
+      const maxHitDice = this.Combatant.MaxHitDice();
+      if (maxHitDice === undefined) {
+        return null;
+      }
+      return `${this.Combatant.CurrentHitDice()}/${maxHitDice}`;
+    });
+    this.HitDicePercentage = ko.pureComputed(() => {
+      const maxHitDice = this.Combatant.MaxHitDice();
+      if (!maxHitDice) {
+        return "0%";
+      }
+      return (
+        Math.floor((this.Combatant.CurrentHitDice() / maxHitDice) * 100) + "%"
       );
     });
     this.Wounds = ko.pureComputed(() => {
@@ -148,6 +166,15 @@ export class CombatantViewModel {
     }
 
     this.Combatant.ApplyResourcesChange(amount);
+  }
+
+  public ApplyHitDiceChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyHitDiceChange(amount);
   }
 
   public ApplyWoundsChange(inputAmount: string) {
@@ -276,6 +303,22 @@ export class CombatantViewModel {
       this.Combatant.RevealedGold(true);
       this.LogEvent(`${this.Name()} gold revealed in player view.`);
       Metrics.TrackEvent(Metrics.Event.CombatantGoldRevealed, {
+        name: this.Name()
+      });
+    }
+  }
+
+  public ToggleRevealedHitDice() {
+    if (this.Combatant.RevealedHitDice()) {
+      this.Combatant.RevealedHitDice(false);
+      this.LogEvent(`${this.Name()} Hit Dice hidden in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantHitDiceHidden, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.RevealedHitDice(true);
+      this.LogEvent(`${this.Name()} Hit Dice revealed in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantHitDiceRevealed, {
         name: this.Name()
       });
     }

@@ -204,7 +204,8 @@ export class Encounter {
         TemporaryHP: 0,
         Hidden: hideOnAdd,
         RevealedAC: false,
-        RevealedGold: true,
+        RevealedGold: false,
+        RevealedHitDice: true,
         Initiative: 0,
         Tags: [],
         RoundCounter: 0,
@@ -246,13 +247,15 @@ export class Encounter {
       CurrentHP: persistentCharacter.CurrentHP,
       CurrentMana: persistentCharacter.CurrentMana,
       CurrentResources: persistentCharacter.CurrentResources,
+      CurrentHitDice: persistentCharacter.CurrentHitDice,
       CurrentWounds: persistentCharacter.CurrentWounds,
       CurrentGold: persistentCharacter.CurrentGold,
       CurrentNotes: persistentCharacter.Notes,
       TemporaryHP: 0,
       Hidden: hideOnAdd,
       RevealedAC: false,
-      RevealedGold: true,
+      RevealedGold: false,
+      RevealedHitDice: true,
       Initiative: initiativeValue,
       Tags: persistentCharacter.Tags ?? [],
       RoundCounter: 0,
@@ -457,6 +460,9 @@ export class Encounter {
         );
         combatant.CurrentResources(
           persistentCharacter.CurrentResources ?? combatant.MaxResources() ?? 0
+        );
+        combatant.CurrentHitDice(
+          persistentCharacter.CurrentHitDice ?? combatant.MaxHitDice() ?? 0
         );
         combatant.CurrentWounds(persistentCharacter.CurrentWounds ?? 0);
         combatant.CurrentGold(persistentCharacter.CurrentGold ?? 0);

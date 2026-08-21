@@ -30,6 +30,10 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
   const currentResourcesPercentage = useSubscription(
     props.combatantViewModel.ResourcesPercentage
   );
+  const currentHitDice = useSubscription(props.combatantViewModel.HitDice);
+  const currentHitDicePercentage = useSubscription(
+    props.combatantViewModel.HitDicePercentage
+  );
   const currentWounds = useSubscription(props.combatantViewModel.Wounds);
   const currentWoundsPercentage = useSubscription(
     props.combatantViewModel.WoundsPercentage
@@ -102,7 +106,7 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
           </>
         )}
       </div>
-      {(currentResources || currentWounds) && (
+      {(currentResources || currentHitDice || currentWounds) && (
         <div className="c-combatant-details__resources-wounds">
           {currentResources && (
             <>
@@ -114,6 +118,22 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
                     <span
                       className="combatant__hp-bar--filled"
                       style={renderHPBarStyle(currentResourcesPercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+          {currentHitDice && (
+            <>
+              <span className="stat-label HitDice">Hit Dice</span>
+              <span>
+                {currentHitDice}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentHitDicePercentage)}
                     />
                   </span>
                 )}

@@ -67,6 +67,10 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
       c => c.ResourcesDisplay != undefined
     );
 
+    const hitDiceColumnVisible = this.props.encounterState.Combatants.some(
+      c => c.HitDiceDisplay != undefined
+    );
+
     const woundsColumnVisible = this.props.encounterState.Combatants.some(
       c => c.WoundsDisplay != undefined
     );
@@ -128,6 +132,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
           acColumnVisible={acColumnVisible}
           manaColumnVisible={manaColumnVisible}
           resourcesColumnVisible={resourcesColumnVisible}
+          hitDiceColumnVisible={hitDiceColumnVisible}
           woundsColumnVisible={woundsColumnVisible}
           goldColumnVisible={goldColumnVisible}
         />
@@ -146,6 +151,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
               acColumnVisible={acColumnVisible}
               manaColumnVisible={manaColumnVisible}
               resourcesColumnVisible={resourcesColumnVisible}
+              hitDiceColumnVisible={hitDiceColumnVisible}
               woundsColumnVisible={woundsColumnVisible}
               goldColumnVisible={goldColumnVisible}
               reactionTrackerVisible={

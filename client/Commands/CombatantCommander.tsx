@@ -22,6 +22,8 @@ import { ApplyManaPrompt } from "../Prompts/ApplyManaPrompt";
 import { RestoreManaPrompt } from "../Prompts/RestoreManaPrompt";
 import { ApplyResourcesPrompt } from "../Prompts/ApplyResourcesPrompt";
 import { RestoreResourcesPrompt } from "../Prompts/RestoreResourcesPrompt";
+import { ApplyHitDicePrompt } from "../Prompts/ApplyHitDicePrompt";
+import { RestoreHitDicePrompt } from "../Prompts/RestoreHitDicePrompt";
 import { ApplyWoundsPrompt } from "../Prompts/ApplyWoundsPrompt";
 import { RestoreWoundsPrompt } from "../Prompts/RestoreWoundsPrompt";
 import { ApplyGoldPrompt } from "../Prompts/ApplyGoldPrompt";
@@ -327,6 +329,43 @@ export class CombatantCommander {
     this.tracker.PromptQueue.Add(prompt);
   };
 
+  private applyHitDiceForCombatants(
+    combatantViewModels: CombatantViewModel[]
+  ) {
+    const prompt = ApplyHitDicePrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogHitDiceChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyHitDiceForCombatants(selectedCombatants);
+  };
+
+  public SpendHitDiceTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyHitDiceForCombatants([combatantViewModel]);
+  };
+
+  public RestoreHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreHitDicePrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogHitDiceChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
   private applyWoundsForCombatants(combatantViewModels: CombatantViewModel[]) {
     const prompt = ApplyWoundsPrompt(
       combatantViewModels,
@@ -621,6 +660,14 @@ export class CombatantCommander {
     }
 
     this.SelectedCombatants().forEach(c => c.ToggleRevealedGold());
+  };
+
+  public ToggleRevealedHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedHitDice());
   };
 
   public EditOwnStatBlock = () => {

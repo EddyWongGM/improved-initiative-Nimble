@@ -16,9 +16,12 @@ export function ToPlayerViewCombatantState(
     ManaColor: GetManaColor(combatant),
     ResourcesDisplay: GetResourcesDisplay(combatant),
     ResourcesColor: GetResourcesColor(combatant),
+    HitDiceDisplay: GetHitDiceDisplay(combatant),
+    HitDiceColor: GetHitDiceColor(combatant),
     WoundsDisplay: GetWoundsDisplay(combatant),
     WoundsColor: GetWoundsColor(combatant),
     GoldDisplay: GetGoldDisplay(combatant),
+    GoldColor: GetGoldColor(combatant),
     Initiative: combatant.Initiative(),
     IsPlayerCharacter: combatant.IsPlayerCharacter(),
     Tags: combatant
@@ -81,7 +84,8 @@ function GetManaDisplay(combatant: Combatant): string | undefined {
     : CurrentSettings().PlayerView.MonsterHPVerbosity;
   const currentMana = combatant.CurrentMana();
   if (manaVerbosity == "Actual HP") {
-    return `${currentMana}/${maxMana}`;
+    // Show current only - the max is DM-only information.
+    return `${currentMana}`;
   }
   if (manaVerbosity == "Hide All") {
     return "";
@@ -129,7 +133,8 @@ function GetResourcesDisplay(combatant: Combatant): string | undefined {
     : CurrentSettings().PlayerView.MonsterHPVerbosity;
   const currentResources = combatant.CurrentResources();
   if (resourcesVerbosity == "Actual HP") {
-    return `${currentResources}/${maxResources}`;
+    // Show current only - the max is DM-only information.
+    return `${currentResources}`;
   }
   if (resourcesVerbosity == "Hide All") {
     return "";
@@ -163,7 +168,64 @@ function GetResourcesColor(combatant: Combatant): string | undefined {
   ) {
     return "auto";
   }
-  return "rgb(210,150,20)";
+  return "rgb(30,150,60)";
+}
+
+function GetHitDiceDisplay(combatant: Combatant): string | undefined {
+  const maxHitDice = combatant.MaxHitDice();
+  const currentHitDice = combatant.CurrentHitDice();
+  if (
+    maxHitDice === undefined ||
+    !combatant.RevealedHitDice() ||
+    currentHitDice >= maxHitDice
+  ) {
+    // Don't reveal the Hit Dice track in Player View while it's still full -
+    // only show it once at least one has been spent.
+    return undefined;
+  }
+
+  const hitDiceVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (hitDiceVerbosity == "Actual HP") {
+    // Show the delta from max (e.g. "-1"), not the raw count - the max
+    // itself is DM-only information.
+    return (currentHitDice - maxHitDice).toString();
+  }
+  if (hitDiceVerbosity == "Hide All") {
+    return "";
+  }
+  if (hitDiceVerbosity == "Damage Taken") {
+    return (currentHitDice - maxHitDice).toString();
+  }
+  if (currentHitDice <= 0) {
+    return "<span class='defeatedHP'>Empty</span>";
+  } else if (currentHitDice < maxHitDice / 2) {
+    return "<span class='bloodiedHP'>Low</span>";
+  } else if (currentHitDice < maxHitDice) {
+    return "<span class='hurtHP'>Reduced</span>";
+  }
+  return "<span class='healthyHP'>Full</span>";
+}
+
+function GetHitDiceColor(combatant: Combatant): string | undefined {
+  const maxHitDice = combatant.MaxHitDice();
+  const currentHitDice = combatant.CurrentHitDice();
+  if (
+    maxHitDice === undefined ||
+    !combatant.RevealedHitDice() ||
+    currentHitDice >= maxHitDice
+  ) {
+    return undefined;
+  }
+
+  const hitDiceVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (
+    hitDiceVerbosity == "Monochrome Label" ||
+    hitDiceVerbosity == "Hide All" ||
+    hitDiceVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  return "rgb(230,120,20)";
 }
 
 function GetWoundsDisplay(combatant: Combatant): string | undefined {
@@ -177,7 +239,8 @@ function GetWoundsDisplay(combatant: Combatant): string | undefined {
 
   const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
   if (woundsVerbosity == "Actual HP") {
-    return `${currentWounds}/${maxWounds}`;
+    // Show current only - the max is DM-only information.
+    return `${currentWounds}`;
   }
   if (woundsVerbosity == "Hide All") {
     return "";
@@ -208,11 +271,7 @@ function GetWoundsColor(combatant: Combatant): string | undefined {
   ) {
     return "auto";
   }
-  // Inverted from HP/Mana: fewer wounds is healthier, so the first wound
-  // reads mostly green and only nears red as wounds approach the max.
-  const green = Math.floor(((maxWounds - currentWounds) / maxWounds) * 170);
-  const red = Math.floor((currentWounds / maxWounds) * 170);
-  return "rgb(" + red + "," + green + ",0)";
+  return "rgb(200,30,180)";
 }
 
 function GetGoldDisplay(combatant: Combatant): string | undefined {
@@ -221,6 +280,14 @@ function GetGoldDisplay(combatant: Combatant): string | undefined {
   }
 
   return `${combatant.CurrentGold()}`;
+}
+
+function GetGoldColor(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedGold()) {
+    return undefined;
+  }
+
+  return "rgb(212,163,42)";
 }
 
 function GetHPColor(combatant: Combatant) {

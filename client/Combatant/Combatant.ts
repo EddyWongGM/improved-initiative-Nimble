@@ -40,6 +40,9 @@ export class Combatant {
     this.CurrentResources = ko.observable(
       combatantState.CurrentResources ?? this.MaxResources() ?? 0
     );
+    this.CurrentHitDice = ko.observable(
+      combatantState.CurrentHitDice ?? this.MaxHitDice() ?? 0
+    );
     this.CurrentWounds = ko.observable(combatantState.CurrentWounds ?? 0);
     this.CurrentGold = ko.observable(combatantState.CurrentGold ?? 0);
 
@@ -69,6 +72,7 @@ export class Combatant {
   public Hidden = ko.observable(false);
   public RevealedAC = ko.observable(false);
   public RevealedGold = ko.observable(true);
+  public RevealedHitDice = ko.observable(true);
   public HasTakenTurn = ko.observable(false);
   public IndexLabel = ko.observable(0);
   public Color = ko.observable("");
@@ -80,6 +84,7 @@ export class Combatant {
   public CurrentHP: KnockoutObservable<number>;
   public CurrentMana: KnockoutObservable<number>;
   public CurrentResources: KnockoutObservable<number>;
+  public CurrentHitDice: KnockoutObservable<number>;
   public CurrentWounds: KnockoutObservable<number>;
   public CurrentGold: KnockoutObservable<number>;
   public CurrentNotes: KnockoutObservable<string>;
@@ -105,6 +110,9 @@ export class Combatant {
     this.CurrentResources(
       savedCombatant.CurrentResources ?? this.MaxResources() ?? 0
     );
+    this.CurrentHitDice(
+      savedCombatant.CurrentHitDice ?? this.MaxHitDice() ?? 0
+    );
     this.CurrentWounds(savedCombatant.CurrentWounds ?? 0);
     this.CurrentGold(savedCombatant.CurrentGold ?? 0);
     this.TemporaryHP(savedCombatant.TemporaryHP);
@@ -117,6 +125,7 @@ export class Combatant {
     this.Hidden(savedCombatant.Hidden);
     this.RevealedAC(savedCombatant.RevealedAC);
     this.RevealedGold(savedCombatant.RevealedGold ?? true);
+    this.RevealedHitDice(savedCombatant.RevealedHitDice ?? true);
     this.HasTakenTurn(savedCombatant.HasTakenTurn || false);
     this.Color(savedCombatant.Color || "");
     this.ReactionsSpent(savedCombatant.ReactionsSpent || 0);
@@ -147,6 +156,12 @@ export class Combatant {
     this.CurrentResources.subscribe(async r => {
       return await updatePersistentCharacter(persistentCharacterId, {
         CurrentResources: r
+      });
+    });
+
+    this.CurrentHitDice.subscribe(async h => {
+      return await updatePersistentCharacter(persistentCharacterId, {
+        CurrentHitDice: h
       });
     });
 
@@ -234,6 +249,10 @@ export class Combatant {
   public MaxMana = ko.computed(() => this.StatBlock().Mana?.Value);
 
   public MaxResources = ko.computed(() => this.StatBlock().Resources?.Value);
+
+  public MaxHitDice = ko.computed(() =>
+    this.IsPlayerCharacter() ? this.StatBlock().HitDice?.Value : undefined
+  );
 
   public MaxWounds = ko.computed(() =>
     this.IsPlayerCharacter() ? this.StatBlock().Wounds?.Value : undefined
@@ -325,6 +344,20 @@ export class Combatant {
     this.CurrentResources(currentResources);
   }
 
+  public ApplyHitDiceChange(amount: number) {
+    const maxHitDice = this.MaxHitDice() ?? 0;
+    let currentHitDice = this.CurrentHitDice() - amount;
+
+    if (currentHitDice < 0) {
+      currentHitDice = 0;
+    }
+    if (currentHitDice > maxHitDice) {
+      currentHitDice = maxHitDice;
+    }
+
+    this.CurrentHitDice(currentHitDice);
+  }
+
   public ApplyGoldChange(amount: number) {
     let currentGold = this.CurrentGold() + amount;
 
@@ -379,6 +412,7 @@ export class Combatant {
       CurrentHP: this.CurrentHP(),
       CurrentMana: this.CurrentMana(),
       CurrentResources: this.CurrentResources(),
+      CurrentHitDice: this.CurrentHitDice(),
       CurrentWounds: this.CurrentWounds(),
       CurrentGold: this.CurrentGold(),
       CurrentNotes: this.CurrentNotes(),
@@ -393,6 +427,7 @@ export class Combatant {
       Hidden: this.Hidden(),
       RevealedAC: this.RevealedAC(),
       RevealedGold: this.RevealedGold(),
+      RevealedHitDice: this.RevealedHitDice(),
       HasTakenTurn: this.HasTakenTurn(),
       Color: this.Color(),
       ReactionsSpent: this.ReactionsSpent(),

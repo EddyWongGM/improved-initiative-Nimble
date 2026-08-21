@@ -22,6 +22,9 @@ export function InitiativeList(props: {
   const showResourcesColumn = encounterState.Combatants.some(
     c => c.StatBlock.Resources
   );
+  const showHitDiceColumn = encounterState.Combatants.some(
+    c => c.StatBlock.HitDice
+  );
   const showWoundsColumn = encounterState.Combatants.some(
     c => c.StatBlock.Wounds
   );
@@ -47,6 +50,7 @@ export function InitiativeList(props: {
           encounterActive={encounterState.ActiveCombatantId != null}
           showManaColumn={showManaColumn}
           showResourcesColumn={showResourcesColumn}
+          showHitDiceColumn={showHitDiceColumn}
           showWoundsColumn={showWoundsColumn}
           showGoldColumn={showGoldColumn}
         />
@@ -69,6 +73,7 @@ export function InitiativeList(props: {
                 initiativeIndex={index}
                 showManaColumn={showManaColumn}
                 showResourcesColumn={showResourcesColumn}
+                showHitDiceColumn={showHitDiceColumn}
                 showWoundsColumn={showWoundsColumn}
                 showGoldColumn={showGoldColumn}
               />

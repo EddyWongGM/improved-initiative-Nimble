@@ -28,7 +28,7 @@ export const BuildCombatantCommandList: (
     id: "spend-mana",
     description: "Spend Mana",
     actionBinding: c.SpendMana,
-    fontAwesomeIcon: "hat-wizard",
+    fontAwesomeIcon: "tint",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -50,6 +50,20 @@ export const BuildCombatantCommandList: (
     description: "Restore Resources",
     actionBinding: c.RestoreResources,
     fontAwesomeIcon: "redo",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "spend-hit-dice",
+    description: "Spend Hit Die",
+    actionBinding: c.SpendHitDice,
+    fontAwesomeIcon: "dice-d6",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-hit-dice",
+    description: "Restore Hit Die",
+    actionBinding: c.RestoreHitDice,
+    fontAwesomeIcon: "bed",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -134,6 +148,13 @@ export const BuildCombatantCommandList: (
     description: "Hide/Reveal Gold in Player View",
     actionBinding: c.ToggleRevealedGold,
     fontAwesomeIcon: "coins",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "toggle-reveal-hit-dice",
+    description: "Hide/Reveal Hit Dice in Player View",
+    actionBinding: c.ToggleRevealedHitDice,
+    fontAwesomeIcon: "dice-d6",
     defaultShowOnActionBar: false
   }),
   new Command({

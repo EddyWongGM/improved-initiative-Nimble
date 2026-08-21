@@ -546,3 +546,177 @@ Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7 pre-existing
 unrelated errors, no new ones) and `npx jest --config client/jest.config.js`
 (128/128 runnable tests pass, same 8 pre-existing `remark-breaks` parse
 failures as baseline).
+
+## Hit Dice — implementation log (done)
+
+Decisions confirmed:
+
+- **Just a count, no die size** — like Resources. A max/current number shown
+  as `2/2` for a level-2 PC. No die-size field, no dice rolling built in —
+  spending a Hit Die just decrements the counter; the DM enters each PC's
+  max by hand (no default preset), and rolls the actual heal at the table.
+- **Purely manual restoration** — no "Long Rest" bulk-restore action; regain
+  Hit Dice via a prompt, same as Resources/Wounds/Gold.
+- **Player characters only** — gated behind `IsPlayerCharacter()`, like
+  Wounds/Gold. Nimble uses the term "Hit Dice," so the field/label/commands
+  keep that name throughout.
+- **Column position: between Resources and Wounds** (not after HP, as
+  originally proposed) — final row order is HP, Mana, Resources, **Hit
+  Dice**, Wounds, AC, Gold.
+- **Add/subtract like HP** — Mana's `current - amount` convention (a
+  positive number on the primary "Spend" prompt decreases the count,
+  matching how a positive number in HP's damage field decreases HP) — not
+  Wounds/Gold's inverted "positive = add" convention, since spending a Hit
+  Die (not gaining one) is the common action during play.
+
+Built as a hybrid of two precedents: Wounds' PC-gating (`IsPlayerCharacter()`
+on every layer, no `StatBlock.HitDice` for monsters) combined with Mana's
+math/display shape (percentage bar, gradient color, "starts full" seeding,
+`- amount` spend convention).
+
+1. **Data model** — `HitDice?: ValueAndNotes` on `StatBlock`
+   ([common/StatBlock.ts](common/StatBlock.ts)); `CurrentHitDice?: number` on
+   `CombatantState` ([common/CombatantState.ts](common/CombatantState.ts)) and
+   `PersistentCharacter` ([common/PersistentCharacter.ts](common/PersistentCharacter.ts));
+   `HitDiceDisplay?`/`HitDiceColor?` on `PlayerViewCombatantState`
+   ([common/PlayerViewCombatantState.ts](common/PlayerViewCombatantState.ts)).
+2. **Stat block editor/display** — `ValueAndNotesField` in
+   [StatBlockEditor.tsx](client/StatBlockEditor/StatBlockEditor.tsx), wrapped
+   in the same `this.props.statBlock.Player == "player" &&` PC-gate Wounds
+   uses, positioned between the Resources and Wounds fields; numeric
+   coercion in
+   [ConvertStringsToNumbersWhereNeeded.tsx](client/StatBlockEditor/ConvertStringsToNumbersWhereNeeded.tsx);
+   conditional row in [CombatantDetails.tsx](client/Combatant/CombatantDetails.tsx),
+   on the second line (with Resources/Wounds) between them.
+3. **Per-combatant tracking** — `Combatant.ts`: `CurrentHitDice` observable
+   (seeded from state or `MaxHitDice`, Mana-style), `MaxHitDice` computed
+   gated on `IsPlayerCharacter()` (Wounds-style), `ApplyHitDiceChange`
+   using `current - amount` clamped `0..max`, persistence + `GetState()`
+   serialization. `CombatantViewModel.ts`: `HitDice`/`HitDicePercentage`
+   computeds + wrapper method.
+4. **Spend/restore UI** — [ApplyHitDicePrompt.tsx](client/Prompts/ApplyHitDicePrompt.tsx) /
+   [RestoreHitDicePrompt.tsx](client/Prompts/RestoreHitDicePrompt.tsx)
+   (mirror `ApplyManaPrompt.tsx`/`RestoreManaPrompt.tsx` exactly, including
+   the sign convention), wired into `CombatantCommander.tsx`
+   (`SpendHitDice`/`SpendHitDiceTargeted`/`RestoreHitDice`), registered in
+   [BuildCombatantCommandList.ts](client/Commands/BuildCombatantCommandList.ts)
+   as "Spend Hit Die" (`dice-d6`) / "Restore Hit Die" (`bed`), logged via a
+   new `EventLog.LogHitDiceChange` ("X Hit Dice spent by Y" / "X Hit Dice
+   restored to Y").
+5. **Initiative list** — conditional Hit Dice column in
+   [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx) /
+   [InitiativeListHeader.tsx](client/InitiativeList/InitiativeListHeader.tsx),
+   positioned between the Resources and Wounds columns; visibility/per-row
+   rendering gated on `StatBlock.HitDice` presence. Colored bar/gradient
+   like HP/Mana (green-at-full, red-at-empty). Click-to-spend through
+   `CommandContext.ApplyHitDiceToCombatant` →
+   [InitiativeListHost.tsx](client/InitiativeList/InitiativeListHost.tsx) →
+   `SpendHitDiceTargeted`.
+6. **Player View** — `GetHitDiceDisplay`/`GetHitDiceColor` in
+   [ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts),
+   using only `PlayerHPVerbosity` (PC-only, like Wounds — no monster-verbosity
+   branch). Conditional column in `PlayerView.tsx`,
+   `PlayerViewCombatantHeader.tsx`, `PlayerViewCombatant.tsx`, positioned
+   between Resources and Wounds.
+7. **Persistence across remove/re-add** — `Encounter.ts` carries
+   `CurrentHitDice` from `PersistentCharacter` onto new/re-added
+   `CombatantState`, defaulting missing values to `MaxHitDice` (Mana-style
+   "starts full" fallback, not `0`).
+8. **Settings copy** — [OptionsSettings.tsx](client/Settings/components/OptionsSettings.tsx)
+   labels updated to mention Hit Dice on the HP-bar toggle and the
+   *player-character* verbosity dropdown (monster dropdown untouched,
+   PC-only like Wounds).
+9. **Styles** — `.combatant__hitdice` rules mirroring `.combatant__resources`
+   in [combatants.less](lesscss/components/combatants.less) (grid area
+   inserted between `resources` and `wounds` in both the desktop column
+   order and the mobile `grid-template`) and
+   [player-view.less](lesscss/pages/player-view.less); `.stat-label.HitDice`
+   spacing in [statblock.less](lesscss/components/statblock.less).
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors, no new ones) and `npx jest --config
+client/jest.config.js` (128/128 runnable tests pass, same 8 pre-existing
+`remark-breaks` parse failures as baseline).
+
+### Follow-up: Hit Dice gets the same live hide/reveal toggle as Gold
+
+Mirrors `RevealedGold`/`ToggleRevealedGold` exactly, including the
+`dice-d6`+`slash` `fa-stack` icon treatment:
+
+- `CombatantState.RevealedHitDice?: boolean`
+  ([common/CombatantState.ts](common/CombatantState.ts)), `Combatant.RevealedHitDice`
+  observable defaulting to `true` (visible), same default direction as Gold.
+- `CombatantViewModel.ToggleRevealedHitDice()` — logs "Hit Dice hidden/revealed
+  in player view," tracks new `Metrics.Event.CombatantHitDiceHidden`/
+  `CombatantHitDiceRevealed` ([Metrics.ts](client/Utility/Metrics.ts)).
+- `CombatantCommander.ToggleRevealedHitDice`, registered in
+  [BuildCombatantCommandList.ts](client/Commands/BuildCombatantCommandList.ts)
+  as "Hide/Reveal Hit Dice in Player View" (`toggle-reveal-hit-dice`), sitting
+  next to "Hide/Reveal Gold in Player View" in the per-row command area.
+- [CombatantRow.tsx](client/InitiativeList/CombatantRow.tsx): the command
+  button renders a real `fa-stack` (`dice-d6` + `slash` layered), same
+  special-case technique used for the Gold toggle (`isStackedIcon` now
+  covers both). A small hidden-badge (`combatant__hitdice--hidden-badge`,
+  `eye-slash`) appears in the DM's Hit Dice cell when `RevealedHitDice` is
+  `false`, mirroring the Gold cell's badge.
+- `GetHitDiceDisplay`/`GetHitDiceColor` in
+  [ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts)
+  now also return `undefined` when `!combatant.RevealedHitDice()`, on top of
+  the existing PC-only/verbosity gating.
+- `RevealedHitDice: true` seeded explicitly in both `Encounter.ts` add paths
+  and [InitializeCombatantFromStatBlock.tsx](client/Reducers/InitializeCombatantFromStatBlock.tsx);
+  [UpdateLegacySavedEncounter.ts](client/Encounter/UpdateLegacySavedEncounter.ts)
+  defaults a missing value to `true` for old saved encounters, matching
+  Gold's legacy migration.
+- Styles: `.combatant__hitdice--hidden-badge` mirrors
+  `.combatant__gold--hidden-badge` in
+  [combatants.less](lesscss/components/combatants.less).
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors, no new ones) and `npx jest --config
+client/jest.config.js` (128/128 runnable tests pass, same baseline).
+
+### Follow-up: new PCs default to hidden Gold and Hit Dice, not visible
+
+The `true` (visible) default was only ever meant as a *fallback* for
+existing/legacy data missing the field, not as the default a DM would want
+every time they add a new PC — flipped the three combatant-construction
+call sites (where `RevealedGold`/`RevealedHitDice` are explicitly set, not
+inferred) from `true` to `false`:
+[Encounter.ts](client/Encounter/Encounter.ts) (`AddCombatantFromStatBlock`
+and `AddCombatantFromPersistentCharacter`) and
+[InitializeCombatantFromStatBlock.tsx](client/Reducers/InitializeCombatantFromStatBlock.tsx).
+
+Left untouched, deliberately: the `?? true` fallback in
+`Combatant.processCombatantState`, the `ko.observable(true)` class-field
+default, and the `?? true` legacy migration in
+[UpdateLegacySavedEncounter.ts](client/Encounter/UpdateLegacySavedEncounter.ts).
+Those only apply to encounters/characters saved *before* this field existed
+— since `??` doesn't override an explicitly-set `false`, this keeps
+already-saved games showing Gold/Hit Dice exactly as before (no retroactive
+hiding), while every newly-added PC going forward starts hidden and the DM
+reveals them explicitly via the toggle commands.
+
+Re-verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors) and `npx jest --config client/jest.config.js`
+(128/128 runnable tests pass, same baseline).
+
+### Follow-up: Player View hides the max for Mana/Resources/Hit Dice/Wounds
+
+Under the "Actual HP"-style verbosity setting, these four used to show
+`current/max` in Player View, same as HP. Changed so they show only
+`current` to players — the max is DM-only information now (visible on the
+DM's own initiative list/combatant details as always). HP and Gold are
+untouched (HP still shows `current/max` — and `current+temp/max` when
+`TemporaryHP` is set — to players; Gold has no max to begin with).
+
+[ToPlayerViewCombatantState.ts](client/Combatant/ToPlayerViewCombatantState.ts):
+`GetManaDisplay`/`GetResourcesDisplay`/`GetHitDiceDisplay`/`GetWoundsDisplay`'s
+`"Actual HP"` branch each changed from `` `${current}/${max}` `` to just
+`` `${current}` ``. The "Damage Taken" and bucketed-label verbosity branches
+were already max-free (a computed delta or a label like "Reduced"/"Full")
+and are unchanged.
+
+Verified with `npx tsc --noEmit -p client/tsconfig.json` (same 7
+pre-existing unrelated errors) and `npx jest --config client/jest.config.js`
+(128/128 runnable tests pass, same baseline).

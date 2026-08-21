@@ -20,6 +20,7 @@ type CombatantRowProps = {
   initiativeIndex: number;
   showManaColumn: boolean;
   showResourcesColumn: boolean;
+  showHitDiceColumn: boolean;
   showWoundsColumn: boolean;
   showGoldColumn: boolean;
 };
@@ -178,6 +179,20 @@ export function CombatantRow(props: CombatantRowProps) {
         </div>
       </td>
 
+      <td className="combatant__ac">
+        <span
+          className="combatant__mobile-icon fas fa-shield-alt"
+          aria-hidden="true"
+        />
+
+        {props.combatantState.StatBlock.AC.Value}
+        {props.combatantState.RevealedAC && (
+          <Tippy content="Revealed in Player View">
+            <span className="combatant__ac--revealed-badge fas fa-eye" />
+          </Tippy>
+        )}
+      </td>
+
       {props.showManaColumn && (
         <td className="combatant__mana">
           {props.combatantState.StatBlock.Mana ? (
@@ -190,7 +205,7 @@ export function CombatantRow(props: CombatantRowProps) {
             >
               <div className="combatant__mana-inner" style={getManaStyle(props)}>
                 <span
-                  className="combatant__mobile-icon fas fa-hat-wizard"
+                  className="combatant__mobile-icon fas fa-tint"
                   aria-hidden="true"
                 />
 
@@ -207,7 +222,7 @@ export function CombatantRow(props: CombatantRowProps) {
             </div>
           ) : (
             <span
-              className="combatant__mobile-icon fas fa-hat-wizard"
+              className="combatant__mobile-icon fas fa-tint"
               aria-hidden="true"
             />
           )}
@@ -255,6 +270,52 @@ export function CombatantRow(props: CombatantRowProps) {
         </td>
       )}
 
+      {props.showHitDiceColumn && (
+        <td className="combatant__hitdice">
+          {props.combatantState.StatBlock.HitDice ? (
+            <div
+              className="combatant__hitdice-outer"
+              onClick={event => {
+                commandContext.ApplyHitDiceToCombatant(
+                  props.combatantState.Id
+                );
+                event.stopPropagation();
+              }}
+            >
+              <div
+                className="combatant__hitdice-inner"
+                style={getHitDiceStyle()}
+              >
+                <span
+                  className="combatant__mobile-icon fas fa-dice-d6"
+                  aria-hidden="true"
+                />
+
+                {renderHitDiceText(props)}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHitDiceBarStyle(props)}
+                    />
+                  </span>
+                )}
+                {props.combatantState.RevealedHitDice === false && (
+                  <Tippy content="Hidden from Player View">
+                    <span className="combatant__hitdice--hidden-badge fas fa-eye-slash" />
+                  </Tippy>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span
+              className="combatant__mobile-icon fas fa-dice-d6"
+              aria-hidden="true"
+            />
+          )}
+        </td>
+      )}
+
       {props.showWoundsColumn && (
         <td className="combatant__wounds">
           {props.combatantState.StatBlock.Wounds ? (
@@ -295,20 +356,6 @@ export function CombatantRow(props: CombatantRowProps) {
           )}
         </td>
       )}
-
-      <td className="combatant__ac">
-        <span
-          className="combatant__mobile-icon fas fa-shield-alt"
-          aria-hidden="true"
-        />
-
-        {props.combatantState.StatBlock.AC.Value}
-        {props.combatantState.RevealedAC && (
-          <Tippy content="Revealed in Player View">
-            <span className="combatant__ac--revealed-badge fas fa-eye" />
-          </Tippy>
-        )}
-      </td>
 
       {props.showGoldColumn && (
         <td className="combatant__gold">
@@ -464,12 +511,14 @@ function CommandButton(props: { command: Command }) {
     return null;
   }
   const isGoldToggle = command.Id === "toggle-reveal-gold";
+  const isHitDiceToggle = command.Id === "toggle-reveal-hit-dice";
+  const isStackedIcon = isGoldToggle || isHitDiceToggle;
   return (
     <Tippy content={`${command.Description} [${command.KeyBinding}]`}>
       <button
         className={
           "combatant__command-button fa-clickable" +
-          (isGoldToggle ? "" : " fa-" + fontAwesomeIcon)
+          (isStackedIcon ? "" : " fa-" + fontAwesomeIcon)
         }
         onClick={command.ActionBinding}
         aria-label={command.Description}
@@ -477,6 +526,12 @@ function CommandButton(props: { command: Command }) {
         {isGoldToggle && (
           <span className="fa-stack">
             <i className="fas fa-coins fa-stack-2x"></i>
+            <i className="fas fa-slash fa-stack-2x"></i>
+          </span>
+        )}
+        {isHitDiceToggle && (
+          <span className="fa-stack">
+            <i className="fas fa-dice-d6 fa-stack-2x"></i>
             <i className="fas fa-slash fa-stack-2x"></i>
           </span>
         )}
@@ -559,7 +614,7 @@ function getResourcesStyle(props: CombatantRowProps) {
   if (!maxResources) {
     return {};
   }
-  return { color: "rgb(210,150,20)" };
+  return { color: "rgb(30,150,60)" };
 }
 
 function renderResourcesText(props: CombatantRowProps) {
@@ -579,6 +634,27 @@ function renderResourcesBarStyle(props: CombatantRowProps) {
   return { width: Math.floor((currentResources / maxResources) * 100) + "%" };
 }
 
+function getHitDiceStyle() {
+  return { color: "rgb(230,120,20)" };
+}
+
+function renderHitDiceText(props: CombatantRowProps) {
+  const maxHitDice = props.combatantState.StatBlock.HitDice?.Value;
+  if (!maxHitDice) {
+    return "";
+  }
+  return `${props.combatantState.CurrentHitDice ?? 0}/${maxHitDice}`;
+}
+
+function renderHitDiceBarStyle(props: CombatantRowProps) {
+  const maxHitDice = props.combatantState.StatBlock.HitDice?.Value;
+  if (!maxHitDice) {
+    return { width: "0%" };
+  }
+  const currentHitDice = props.combatantState.CurrentHitDice ?? 0;
+  return { width: Math.floor((currentHitDice / maxHitDice) * 100) + "%" };
+}
+
 function getGoldStyle() {
   return { color: "rgb(212,163,42)" };
 }
@@ -592,11 +668,7 @@ function getWoundsStyle(props: CombatantRowProps) {
   if (!maxWounds) {
     return {};
   }
-  const currentWounds = props.combatantState.CurrentWounds ?? 0;
-  // Do not set green any higher, low value is needed for contrast against light background
-  const green = Math.floor(((maxWounds - currentWounds) / maxWounds) * 120);
-  const red = Math.floor((currentWounds / maxWounds) * 170);
-  return { color: "rgb(" + red + "," + green + ",0)" };
+  return { color: "rgb(200,30,180)" };
 }
 
 function renderWoundsText(props: CombatantRowProps) {

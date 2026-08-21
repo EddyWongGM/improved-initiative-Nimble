@@ -94,6 +94,7 @@
   .combatant .combatant__hp-outer,
   .combatant .combatant__mana-outer,
   .combatant .combatant__resources-outer,
+  .combatant .combatant__hitdice-outer,
   .combatant .combatant__wounds-outer,
   .combatant .combatant__gold-outer {
     transition: box-shadow @transition-hover;
@@ -135,6 +136,7 @@
 .combatant__hp:hover,
 .combatant__mana:hover,
 .combatant__resources:hover,
+.combatant__hitdice:hover,
 .combatant__wounds:hover {
   .combatant__hp-bar {
     opacity: 1;
@@ -178,10 +180,10 @@
     display: grid;
     /* prettier-ignore */
     grid-template:
-      "leftgutter image name           mana         resources wounds   ac       hp       gold"
-      "leftgutter image divider        divider      divider   divider  divider  divider  divider"
-      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands" /
-       auto auto  minmax(0, 1fr) auto     auto      auto     auto     auto     auto;
+      "leftgutter image name           mana         resources hitdice  wounds   hp       ac       gold"
+      "leftgutter image divider        divider      divider   divider  divider  divider  divider  divider"
+      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands" /
+       auto auto  minmax(0, 1fr) auto     auto      auto     auto     auto     auto     auto;
 
     &::before {
       content: "";
@@ -348,6 +350,18 @@
   }
 }
 
+.combatant__hitdice {
+  width: 4rem;
+  justify-content: center;
+  grid-area: hitdice;
+
+  @media (max-width: @medium) {
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+  }
+}
+
 .combatant__wounds {
   width: 4rem;
   justify-content: center;
@@ -384,6 +398,12 @@
 }
 
 .combatant__gold--hidden-badge {
+  font-size: 80%;
+  margin-left: @extra-small-spacer;
+  color: var(--text-faded);
+}
+
+.combatant__hitdice--hidden-badge {
   font-size: 80%;
   margin-left: @extra-small-spacer;
   color: var(--text-faded);

@@ -12,6 +12,9 @@ export const ConvertStringsToNumbersWhereNeeded = (statBlock: StatBlock) => {
   if (statBlock.Resources) {
     statBlock.Resources.Value = castToNumberOrZero(statBlock.Resources.Value);
   }
+  if (statBlock.HitDice) {
+    statBlock.HitDice.Value = castToNumberOrZero(statBlock.HitDice.Value);
+  }
   if (statBlock.Wounds) {
     statBlock.Wounds.Value = castToNumberOrZero(statBlock.Wounds.Value);
   }

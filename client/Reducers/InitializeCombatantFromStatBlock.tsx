@@ -16,7 +16,8 @@ export function InitializeCombatantFromStatBlock(
     IndexLabel: 0,
     Hidden: false,
     RevealedAC: false,
-    RevealedGold: true,
+    RevealedGold: false,
+    RevealedHitDice: true,
     Tags: [],
     InterfaceVersion: process.env.VERSION || "unknown"
   };

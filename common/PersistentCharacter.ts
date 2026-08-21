@@ -12,6 +12,7 @@ export interface PersistentCharacter {
   CurrentHP: number;
   CurrentMana?: number;
   CurrentResources?: number;
+  CurrentHitDice?: number;
   CurrentWounds?: number;
   CurrentGold?: number;
   StatBlock: StatBlock;
@@ -30,6 +31,7 @@ export namespace PersistentCharacter {
       CurrentHP: statBlock.HP.Value,
       CurrentMana: statBlock.Mana?.Value,
       CurrentResources: statBlock.Resources?.Value,
+      CurrentHitDice: statBlock.HitDice?.Value,
       CurrentWounds: statBlock.Wounds ? 0 : undefined,
       CurrentGold: 0,
       StatBlock: statBlock,

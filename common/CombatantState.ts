@@ -16,6 +16,8 @@ export interface CombatantState {
   CurrentHP: number;
   CurrentMana?: number;
   CurrentResources?: number;
+  CurrentHitDice?: number;
+  RevealedHitDice?: boolean;
   CurrentWounds?: number;
   CurrentGold?: number;
   RevealedGold?: boolean;

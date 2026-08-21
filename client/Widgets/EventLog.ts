@@ -34,6 +34,15 @@ export class EventLog {
     }
   };
 
+  public LogHitDiceChange = (amount: number, combatantNames: string) => {
+    if (amount > 0) {
+      this.AddEvent(`${amount} Hit Dice spent by ${combatantNames}.`);
+    }
+    if (amount < 0) {
+      this.AddEvent(`${-amount} Hit Dice restored to ${combatantNames}.`);
+    }
+  };
+
   public LogWoundsChange = (amount: number, combatantNames: string) => {
     if (amount > 0) {
       this.AddEvent(`${amount} wounds added to ${combatantNames}.`);

@@ -10,6 +10,7 @@ export const CommandContext = React.createContext({
   ApplyDamageToCombatant: (combatantId: string) => {},
   ApplyManaToCombatant: (combatantId: string) => {},
   ApplyResourcesToCombatant: (combatantId: string) => {},
+  ApplyHitDiceToCombatant: (combatantId: string) => {},
   ApplyWoundsToCombatant: (combatantId: string) => {},
   ApplyGoldToCombatant: (combatantId: string) => {},
   MoveCombatantFromDrag: (
