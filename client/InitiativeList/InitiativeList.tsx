@@ -18,6 +18,9 @@ export function InitiativeList(props: {
   const showManaColumn = encounterState.Combatants.some(
     c => c.StatBlock.Mana
   );
+  const showWoundsColumn = encounterState.Combatants.some(
+    c => c.StatBlock.Wounds
+  );
   const anyHasTakenTurn = encounterState.Combatants.some(c => c.HasTakenTurn);
 
   return (
@@ -36,6 +39,7 @@ export function InitiativeList(props: {
         <InitiativeListHeader
           encounterActive={encounterState.ActiveCombatantId != null}
           showManaColumn={showManaColumn}
+          showWoundsColumn={showWoundsColumn}
         />
         <tbody>
           {encounterState.Combatants.map((combatantState, index) => {
@@ -55,6 +59,7 @@ export function InitiativeList(props: {
                 showIndexLabel={siblingCount > 1}
                 initiativeIndex={index}
                 showManaColumn={showManaColumn}
+                showWoundsColumn={showWoundsColumn}
               />
             );
           })}

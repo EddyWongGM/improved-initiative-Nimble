@@ -18,6 +18,7 @@ type CombatantRowProps = {
   showIndexLabel: boolean;
   initiativeIndex: number;
   showManaColumn: boolean;
+  showWoundsColumn: boolean;
 };
 
 type CombatantDragData = {
@@ -204,6 +205,47 @@ export function CombatantRow(props: CombatantRowProps) {
           ) : (
             <span
               className="combatant__mobile-icon fas fa-hat-wizard"
+              aria-hidden="true"
+            />
+          )}
+        </td>
+      )}
+
+      {props.showWoundsColumn && (
+        <td className="combatant__wounds">
+          {props.combatantState.StatBlock.Wounds ? (
+            <div
+              className="combatant__wounds-outer"
+              onClick={event => {
+                commandContext.ApplyWoundsToCombatant(
+                  props.combatantState.Id
+                );
+                event.stopPropagation();
+              }}
+            >
+              <div
+                className="combatant__wounds-inner"
+                style={getWoundsStyle(props)}
+              >
+                <span
+                  className="combatant__mobile-icon fas fa-skull-crossbones"
+                  aria-hidden="true"
+                />
+
+                {renderWoundsText(props)}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderWoundsBarStyle(props)}
+                    />
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span
+              className="combatant__mobile-icon fas fa-skull-crossbones"
               aria-hidden="true"
             />
           )}
@@ -422,4 +464,33 @@ function renderManaBarStyle(props: CombatantRowProps) {
   }
   const currentMana = props.combatantState.CurrentMana ?? 0;
   return { width: Math.floor((currentMana / maxMana) * 100) + "%" };
+}
+
+function getWoundsStyle(props: CombatantRowProps) {
+  const maxWounds = props.combatantState.StatBlock.Wounds?.Value;
+  if (!maxWounds) {
+    return {};
+  }
+  const currentWounds = props.combatantState.CurrentWounds ?? 0;
+  // Do not set green any higher, low value is needed for contrast against light background
+  const green = Math.floor(((maxWounds - currentWounds) / maxWounds) * 120);
+  const red = Math.floor((currentWounds / maxWounds) * 170);
+  return { color: "rgb(" + red + "," + green + ",0)" };
+}
+
+function renderWoundsText(props: CombatantRowProps) {
+  const maxWounds = props.combatantState.StatBlock.Wounds?.Value;
+  if (!maxWounds) {
+    return "";
+  }
+  return `${props.combatantState.CurrentWounds ?? 0}/${maxWounds}`;
+}
+
+function renderWoundsBarStyle(props: CombatantRowProps) {
+  const maxWounds = props.combatantState.StatBlock.Wounds?.Value;
+  if (!maxWounds) {
+    return { width: "0%" };
+  }
+  const currentWounds = props.combatantState.CurrentWounds ?? 0;
+  return { width: Math.floor((currentWounds / maxWounds) * 100) + "%" };
 }

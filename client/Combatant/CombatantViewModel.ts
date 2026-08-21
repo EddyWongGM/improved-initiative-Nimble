@@ -19,6 +19,8 @@ export class CombatantViewModel {
   public HPPercentage: ko.PureComputed<string>;
   public Mana: ko.PureComputed<string>;
   public ManaPercentage: ko.PureComputed<string>;
+  public Wounds: ko.PureComputed<string>;
+  public WoundsPercentage: ko.PureComputed<string>;
   public Name: ko.PureComputed<string>;
 
   constructor(
@@ -55,6 +57,22 @@ export class CombatantViewModel {
       }
       return (
         Math.floor((this.Combatant.CurrentMana() / maxMana) * 100) + "%"
+      );
+    });
+    this.Wounds = ko.pureComputed(() => {
+      const maxWounds = this.Combatant.MaxWounds();
+      if (maxWounds === undefined) {
+        return null;
+      }
+      return `${this.Combatant.CurrentWounds()}/${maxWounds}`;
+    });
+    this.WoundsPercentage = ko.pureComputed(() => {
+      const maxWounds = this.Combatant.MaxWounds();
+      if (!maxWounds) {
+        return "0%";
+      }
+      return (
+        Math.floor((this.Combatant.CurrentWounds() / maxWounds) * 100) + "%"
       );
     });
     this.Name = Combatant.DisplayName;
@@ -94,6 +112,15 @@ export class CombatantViewModel {
     }
 
     this.Combatant.ApplyManaChange(amount);
+  }
+
+  public ApplyWoundsChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyWoundsChange(amount);
   }
 
   public ApplyTemporaryHP(newTemporaryHP: number) {

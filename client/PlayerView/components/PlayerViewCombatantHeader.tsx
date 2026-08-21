@@ -8,6 +8,7 @@ export const PlayerViewCombatantHeader = (props: {
   portraitColumnVisible: boolean;
   acColumnVisible: boolean;
   manaColumnVisible: boolean;
+  woundsColumnVisible: boolean;
 }) => (
   <div className="combatant--header">
     {props.portraitColumnVisible && <div className="combatant__portrait" />}
@@ -18,6 +19,11 @@ export const PlayerViewCombatantHeader = (props: {
     {props.manaColumnVisible && (
       <div className="combatant__mana">
         <span className="fas fa-hat-wizard" />
+      </div>
+    )}
+    {props.woundsColumnVisible && (
+      <div className="combatant__wounds">
+        <span className="fas fa-skull-crossbones" />
       </div>
     )}
     {props.acColumnVisible && (

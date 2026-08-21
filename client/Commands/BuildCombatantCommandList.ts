@@ -39,6 +39,20 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
+    id: "spend-wounds",
+    description: "Add Wounds",
+    actionBinding: c.SpendWounds,
+    fontAwesomeIcon: "skull-crossbones",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-wounds",
+    description: "Heal Wounds",
+    actionBinding: c.RestoreWounds,
+    fontAwesomeIcon: "band-aid",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
     id: "add-tag",
     description: "Add Tag",
     actionBinding: c.AddTag,

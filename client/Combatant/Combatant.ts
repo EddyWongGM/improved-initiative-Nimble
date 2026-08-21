@@ -37,6 +37,7 @@ export class Combatant {
     this.CurrentMana = ko.observable(
       combatantState.CurrentMana ?? this.MaxMana() ?? 0
     );
+    this.CurrentWounds = ko.observable(combatantState.CurrentWounds ?? 0);
 
     this.processCombatantState(combatantState);
 
@@ -73,6 +74,7 @@ export class Combatant {
 
   public CurrentHP: KnockoutObservable<number>;
   public CurrentMana: KnockoutObservable<number>;
+  public CurrentWounds: KnockoutObservable<number>;
   public CurrentNotes: KnockoutObservable<string>;
   public PlayerDisplayHP: KnockoutComputed<string>;
   private updatingGroup = false;
@@ -93,6 +95,7 @@ export class Combatant {
     this.CurrentHP(savedCombatant.CurrentHP);
     this.CurrentNotes(savedCombatant.CurrentNotes || "");
     this.CurrentMana(savedCombatant.CurrentMana ?? this.MaxMana() ?? 0);
+    this.CurrentWounds(savedCombatant.CurrentWounds ?? 0);
     this.TemporaryHP(savedCombatant.TemporaryHP);
     this.Initiative(savedCombatant.Initiative);
     this.InitiativeGroup(
@@ -126,6 +129,12 @@ export class Combatant {
     this.CurrentMana.subscribe(async m => {
       return await updatePersistentCharacter(persistentCharacterId, {
         CurrentMana: m
+      });
+    });
+
+    this.CurrentWounds.subscribe(async w => {
+      return await updatePersistentCharacter(persistentCharacterId, {
+        CurrentWounds: w
       });
     });
 
@@ -187,6 +196,10 @@ export class Combatant {
   public MaxHP = ko.computed(() => this.StatBlock().HP.Value);
 
   public MaxMana = ko.computed(() => this.StatBlock().Mana?.Value);
+
+  public MaxWounds = ko.computed(() =>
+    this.IsPlayerCharacter() ? this.StatBlock().Wounds?.Value : undefined
+  );
 
   public GetInitiativeRoll: () => AbilityCheckResult = () => {
     const sideInitiative =
@@ -260,6 +273,20 @@ export class Combatant {
     this.CurrentMana(currentMana);
   }
 
+  public ApplyWoundsChange(amount: number) {
+    const maxWounds = this.MaxWounds() ?? 0;
+    let currentWounds = this.CurrentWounds() + amount;
+
+    if (currentWounds < 0) {
+      currentWounds = 0;
+    }
+    if (currentWounds > maxWounds) {
+      currentWounds = maxWounds;
+    }
+
+    this.CurrentWounds(currentWounds);
+  }
+
   public ApplyTemporaryHP(tempHP: number) {
     if (tempHP > this.TemporaryHP()) {
       this.TemporaryHP(tempHP);
@@ -289,6 +316,7 @@ export class Combatant {
       StatBlock: this.StatBlock(),
       CurrentHP: this.CurrentHP(),
       CurrentMana: this.CurrentMana(),
+      CurrentWounds: this.CurrentWounds(),
       CurrentNotes: this.CurrentNotes(),
       TemporaryHP: this.TemporaryHP(),
       Initiative: this.Initiative(),

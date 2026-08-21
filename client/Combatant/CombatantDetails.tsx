@@ -26,6 +26,10 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
   const currentManaPercentage = useSubscription(
     props.combatantViewModel.ManaPercentage
   );
+  const currentWounds = useSubscription(props.combatantViewModel.Wounds);
+  const currentWoundsPercentage = useSubscription(
+    props.combatantViewModel.WoundsPercentage
+  );
   const name = useSubscription(props.combatantViewModel.Name);
   const tags = useSubscription(props.combatantViewModel.Combatant.Tags);
   const notes = useSubscription(
@@ -79,6 +83,22 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
                   <span
                     className="combatant__hp-bar--filled"
                     style={renderHPBarStyle(currentManaPercentage)}
+                  />
+                </span>
+              )}
+            </span>
+          </>
+        )}
+        {currentWounds && (
+          <>
+            <span className="stat-label Wounds">Wounds</span>
+            <span>
+              {currentWounds}
+              {DisplayHPBar && (
+                <span className="combatant__hp-bar">
+                  <span
+                    className="combatant__hp-bar--filled"
+                    style={renderHPBarStyle(currentWoundsPercentage)}
                   />
                 </span>
               )}

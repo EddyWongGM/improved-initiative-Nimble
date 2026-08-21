@@ -20,6 +20,8 @@ import { ApplyDamagePrompt } from "../Prompts/ApplyDamagePrompt";
 import { ApplyHealingPrompt } from "../Prompts/ApplyHealingPrompt";
 import { ApplyManaPrompt } from "../Prompts/ApplyManaPrompt";
 import { RestoreManaPrompt } from "../Prompts/RestoreManaPrompt";
+import { ApplyWoundsPrompt } from "../Prompts/ApplyWoundsPrompt";
+import { RestoreWoundsPrompt } from "../Prompts/RestoreWoundsPrompt";
 import { ConcentrationPrompt } from "../Prompts/ConcentrationPrompt";
 import { ShowDiceRollPrompt } from "../Prompts/RollDicePrompt";
 import { TagPrompt } from "../Prompts/TagPrompt";
@@ -280,6 +282,41 @@ export class CombatantCommander {
       selectedCombatants,
       "",
       this.tracker.EventLog.LogManaChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
+  private applyWoundsForCombatants(combatantViewModels: CombatantViewModel[]) {
+    const prompt = ApplyWoundsPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogWoundsChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyWoundsForCombatants(selectedCombatants);
+  };
+
+  public SpendWoundsTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyWoundsForCombatants([combatantViewModel]);
+  };
+
+  public RestoreWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreWoundsPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogWoundsChange
     );
     this.tracker.PromptQueue.Add(prompt);
   };

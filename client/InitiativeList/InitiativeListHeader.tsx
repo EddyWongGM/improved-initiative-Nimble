@@ -4,6 +4,7 @@ import { SettingsContext } from "../Settings/SettingsContext";
 export function InitiativeListHeader(props: {
   encounterActive: boolean;
   showManaColumn: boolean;
+  showWoundsColumn: boolean;
 }) {
   const settings = React.useContext(SettingsContext);
 
@@ -33,6 +34,17 @@ export function InitiativeListHeader(props: {
             <span
               className="fas fa-hat-wizard"
               title="Mana"
+              aria-hidden="true"
+            ></span>
+          </th>
+        )}
+
+        {props.showWoundsColumn && (
+          <th className="combatant__wounds">
+            <span className="screen-reader-only">Wounds</span>
+            <span
+              className="fas fa-skull-crossbones"
+              title="Wounds"
               aria-hidden="true"
             ></span>
           </th>

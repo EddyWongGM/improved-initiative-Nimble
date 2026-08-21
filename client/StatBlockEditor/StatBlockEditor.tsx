@@ -192,6 +192,9 @@ export class StatBlockEditor extends React.Component<
           <ValueAndNotesField label="Hit Points" fieldName="HP" />
           <ValueAndNotesField label="Defense" fieldName="AC" />
           <ValueAndNotesField label="Mana" fieldName="Mana" />
+          {this.props.statBlock.Player == "player" && (
+            <ValueAndNotesField label="Wounds" fieldName="Wounds" />
+          )}
           <InitiativeField />
         </div>
         <div className="c-statblock-editor__abilityscores">

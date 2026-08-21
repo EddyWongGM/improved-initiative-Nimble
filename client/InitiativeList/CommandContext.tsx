@@ -9,6 +9,7 @@ export const CommandContext = React.createContext({
   RemoveTagFromCombatant: (combatantId: string, tagState: TagState) => {},
   ApplyDamageToCombatant: (combatantId: string) => {},
   ApplyManaToCombatant: (combatantId: string) => {},
+  ApplyWoundsToCombatant: (combatantId: string) => {},
   MoveCombatantFromDrag: (
     draggedCombatantId: string,
     droppedOntoCombatantId: string | null

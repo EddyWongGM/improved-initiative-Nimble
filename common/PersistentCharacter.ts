@@ -10,6 +10,7 @@ export interface PersistentCharacter {
   LastUpdateMs: number;
   CurrentHP: number;
   CurrentMana?: number;
+  CurrentWounds?: number;
   StatBlock: StatBlock;
   Notes: string;
 }
@@ -24,6 +25,7 @@ export namespace PersistentCharacter {
       LastUpdateMs: now(),
       CurrentHP: statBlock.HP.Value,
       CurrentMana: statBlock.Mana?.Value,
+      CurrentWounds: statBlock.Wounds ? 0 : undefined,
       StatBlock: statBlock,
       Notes: ""
     };

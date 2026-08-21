@@ -244,6 +244,7 @@ export class Encounter {
       IndexLabel: null,
       CurrentHP: persistentCharacter.CurrentHP,
       CurrentMana: persistentCharacter.CurrentMana,
+      CurrentWounds: persistentCharacter.CurrentWounds,
       CurrentNotes: persistentCharacter.Notes,
       TemporaryHP: 0,
       Hidden: hideOnAdd,
@@ -450,6 +451,7 @@ export class Encounter {
         combatant.CurrentMana(
           persistentCharacter.CurrentMana ?? combatant.MaxMana() ?? 0
         );
+        combatant.CurrentWounds(persistentCharacter.CurrentWounds ?? 0);
         combatant.CurrentNotes(persistentCharacter.Notes);
         combatant.AttachToPersistentCharacterLibrary(updatePersistentCharacter);
       }

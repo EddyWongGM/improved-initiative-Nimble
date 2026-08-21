@@ -14,6 +14,8 @@ export function ToPlayerViewCombatantState(
     HPColor: GetHPColor(combatant),
     ManaDisplay: GetManaDisplay(combatant),
     ManaColor: GetManaColor(combatant),
+    WoundsDisplay: GetWoundsDisplay(combatant),
+    WoundsColor: GetWoundsColor(combatant),
     Initiative: combatant.Initiative(),
     IsPlayerCharacter: combatant.IsPlayerCharacter(),
     Tags: combatant
@@ -111,6 +113,55 @@ function GetManaColor(combatant: Combatant): string | undefined {
     return "auto";
   }
   return "rgb(0,120,220)";
+}
+
+function GetWoundsDisplay(combatant: Combatant): string | undefined {
+  const maxWounds = combatant.MaxWounds();
+  const currentWounds = combatant.CurrentWounds();
+  if (maxWounds === undefined || currentWounds <= 0) {
+    // Don't reveal the Wounds track in Player View until a wound has
+    // actually been taken.
+    return undefined;
+  }
+
+  const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (woundsVerbosity == "Actual HP") {
+    return `${currentWounds}/${maxWounds}`;
+  }
+  if (woundsVerbosity == "Hide All") {
+    return "";
+  }
+  if (woundsVerbosity == "Damage Taken") {
+    return currentWounds.toString();
+  }
+  if (currentWounds >= maxWounds) {
+    return "<span class='defeatedHP'>Defeated</span>";
+  } else if (currentWounds > maxWounds / 2) {
+    return "<span class='bloodiedHP'>Wounded</span>";
+  }
+  return "<span class='hurtHP'>Hurt</span>";
+}
+
+function GetWoundsColor(combatant: Combatant): string | undefined {
+  const maxWounds = combatant.MaxWounds();
+  const currentWounds = combatant.CurrentWounds();
+  if (maxWounds === undefined || currentWounds <= 0) {
+    return undefined;
+  }
+
+  const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (
+    woundsVerbosity == "Monochrome Label" ||
+    woundsVerbosity == "Hide All" ||
+    woundsVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  // Inverted from HP/Mana: fewer wounds is healthier, so the first wound
+  // reads mostly green and only nears red as wounds approach the max.
+  const green = Math.floor(((maxWounds - currentWounds) / maxWounds) * 170);
+  const red = Math.floor((currentWounds / maxWounds) * 170);
+  return "rgb(" + red + "," + green + ",0)";
 }
 
 function GetHPColor(combatant: Combatant) {

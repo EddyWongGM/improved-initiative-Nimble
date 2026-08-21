@@ -24,4 +24,13 @@ export class EventLog {
       this.AddEvent(`${-amount} mana restored to ${combatantNames}.`);
     }
   };
+
+  public LogWoundsChange = (amount: number, combatantNames: string) => {
+    if (amount > 0) {
+      this.AddEvent(`${amount} wounds added to ${combatantNames}.`);
+    }
+    if (amount < 0) {
+      this.AddEvent(`${-amount} wounds healed for ${combatantNames}.`);
+    }
+  };
 }

@@ -6,6 +6,8 @@ export interface PlayerViewCombatantState {
   HPColor: string;
   ManaDisplay?: string;
   ManaColor?: string;
+  WoundsDisplay?: string;
+  WoundsColor?: string;
   Initiative: number;
   Id: string;
   Tags: TagState[];

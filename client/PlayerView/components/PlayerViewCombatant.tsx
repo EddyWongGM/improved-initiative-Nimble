@@ -9,6 +9,7 @@ interface PlayerViewCombatantProps {
   portraitColumnVisible: boolean;
   acColumnVisible: boolean;
   manaColumnVisible: boolean;
+  woundsColumnVisible: boolean;
   reactionTrackerVisible: boolean;
   colorVisible: boolean;
   areSuggestionsAllowed: boolean;
@@ -71,6 +72,16 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
               style={{ color: this.props.combatant.ManaColor }}
               dangerouslySetInnerHTML={{
                 __html: this.props.combatant.ManaDisplay || ""
+              }}
+            />
+          </div>
+        )}
+        {this.props.woundsColumnVisible && (
+          <div className="combatant__wounds">
+            <span
+              style={{ color: this.props.combatant.WoundsColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.WoundsDisplay || ""
               }}
             />
           </div>
