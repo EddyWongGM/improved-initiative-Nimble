@@ -15,6 +15,8 @@ export interface PlayerViewCombatantState {
   WoundsColor?: string;
   GoldDisplay?: string;
   GoldColor?: string;
+  InventoryDisplay?: string;
+  InventoryColor?: string;
   Initiative: number;
   Id: string;
   Tags: TagState[];

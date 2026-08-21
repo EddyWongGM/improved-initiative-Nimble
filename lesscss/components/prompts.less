@@ -40,6 +40,34 @@
     flex-direction: row;
   }
 
+  .add-item {
+    flex-grow: 1;
+    flex-flow: column;
+    align-items: stretch;
+  }
+
+  .add-item__row {
+    flex-flow: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: @larger-spacer;
+
+    input,
+    select {
+      margin: 0;
+      height: 1.6rem;
+    }
+  }
+
+  .add-item__stackable-label,
+  .add-item__quantity-label,
+  .add-item__slot-cost-label {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: @small-spacer;
+  }
+
   .add-tag {
     flex-grow: 1;
     flex-flow: column;
@@ -215,6 +243,15 @@
 
   input[type="number"] {
     width: 4rem;
+  }
+
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    margin: @small-spacer;
+    accent-color: rgb(0, 120, 220);
+    vertical-align: middle;
   }
 }
 

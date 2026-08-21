@@ -31,6 +31,9 @@ export function InitiativeList(props: {
   const showWoundsColumn = encounterState.Combatants.some(
     c => c.StatBlock.Wounds && StatBlock.ActsInPlayerPhase(c.StatBlock)
   );
+  const showItemsColumn = encounterState.Combatants.some(c =>
+    StatBlock.IsPlayerCharacter(c.StatBlock)
+  );
   const showGoldColumn = encounterState.Combatants.some(c =>
     StatBlock.IsPlayerCharacter(c.StatBlock)
   );
@@ -61,6 +64,7 @@ export function InitiativeList(props: {
           showResourcesColumn={showResourcesColumn}
           showHitDiceColumn={showHitDiceColumn}
           showWoundsColumn={showWoundsColumn}
+          showItemsColumn={showItemsColumn}
           showGoldColumn={showGoldColumn}
         />
         <tbody>
@@ -90,6 +94,7 @@ export function InitiativeList(props: {
                 showResourcesColumn={showResourcesColumn}
                 showHitDiceColumn={showHitDiceColumn}
                 showWoundsColumn={showWoundsColumn}
+                showItemsColumn={showItemsColumn}
                 showGoldColumn={showGoldColumn}
               />
             );

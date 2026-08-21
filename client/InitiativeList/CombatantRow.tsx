@@ -3,6 +3,10 @@ import * as React from "react";
 import { CombatantState } from "../../common/CombatantState";
 import { StatBlock as StatBlockNamespace } from "../../common/StatBlock";
 import { Tags } from "./Tags";
+import {
+  GetInventorySlotsUsed,
+  GetMaxInventorySlots
+} from "../Combatant/InventorySlots";
 import { CommandContext } from "./CommandContext";
 import { SettingsContext } from "../Settings/SettingsContext";
 import { Command } from "../Commands/Command";
@@ -22,6 +26,7 @@ type CombatantRowProps = {
   showResourcesColumn: boolean;
   showHitDiceColumn: boolean;
   showWoundsColumn: boolean;
+  showItemsColumn: boolean;
   showGoldColumn: boolean;
 };
 
@@ -361,6 +366,44 @@ export function CombatantRow(props: CombatantRowProps) {
         </td>
       )}
 
+      {props.showItemsColumn && (
+        <td className="combatant__items-slots">
+          {StatBlockNamespace.IsPlayerCharacter(
+            props.combatantState.StatBlock
+          ) ? (
+            <div
+              className="combatant__items-slots-outer"
+              onClick={event => {
+                commandContext.AddItemToCombatant(props.combatantState.Id);
+                event.stopPropagation();
+              }}
+            >
+              <div
+                className="combatant__items-slots-inner"
+                style={getItemsStyle(props)}
+              >
+                <span
+                  className="combatant__mobile-icon fas fa-gem"
+                  aria-hidden="true"
+                />
+
+                {renderItemsText(props)}
+                {props.combatantState.RevealedItems === false && (
+                  <Tippy content="Hidden from Player View">
+                    <span className="combatant__items-slots--hidden-badge fas fa-eye-slash" />
+                  </Tippy>
+                )}
+              </div>
+            </div>
+          ) : (
+            <span
+              className="combatant__mobile-icon fas fa-gem"
+              aria-hidden="true"
+            />
+          )}
+        </td>
+      )}
+
       {props.showGoldColumn && (
         <td className="combatant__gold">
           {StatBlockNamespace.IsPlayerCharacter(
@@ -687,6 +730,21 @@ function renderHitDiceBarStyle(props: CombatantRowProps) {
   return { width: Math.floor((currentHitDice / maxHitDice) * 100) + "%" };
 }
 
+function getItemsStyle(props: CombatantRowProps) {
+  const maxSlots = GetMaxInventorySlots(props.combatantState.StatBlock);
+  const slotsUsed = GetInventorySlotsUsed(props.combatantState.Items ?? []);
+  if (slotsUsed > maxSlots) {
+    return { color: "rgb(200,30,30)" };
+  }
+  return { color: "rgb(139,90,43)" };
+}
+
+function renderItemsText(props: CombatantRowProps) {
+  const maxSlots = GetMaxInventorySlots(props.combatantState.StatBlock);
+  const slotsUsed = GetInventorySlotsUsed(props.combatantState.Items ?? []);
+  return `${slotsUsed}/${maxSlots}`;
+}
+
 function getGoldStyle() {
   return { color: "rgb(212,163,42)" };
 }
@@ -700,6 +758,10 @@ function getWoundsStyle(props: CombatantRowProps) {
   if (!maxWounds) {
     return {};
   }
+  const currentWounds = props.combatantState.CurrentWounds ?? 0;
+  if (currentWounds === 0 && !props.combatantState.TemporaryWounds) {
+    return { color: "rgba(200,30,180,0.4)" };
+  }
   return { color: "rgb(200,30,180)" };
 }
 
@@ -708,10 +770,14 @@ function renderWoundsText(props: CombatantRowProps) {
   if (!maxWounds) {
     return "";
   }
+  const currentWounds = props.combatantState.CurrentWounds ?? 0;
   if (props.combatantState.TemporaryWounds) {
-    return `${props.combatantState.CurrentWounds ?? 0}+${props.combatantState.TemporaryWounds}/${maxWounds}`;
+    return `${currentWounds}+${props.combatantState.TemporaryWounds}/${maxWounds}`;
   }
-  return `${props.combatantState.CurrentWounds ?? 0}/${maxWounds}`;
+  if (currentWounds === 0) {
+    return "0";
+  }
+  return `${currentWounds}/${maxWounds}`;
 }
 
 function renderWoundsBarStyle(props: CombatantRowProps) {

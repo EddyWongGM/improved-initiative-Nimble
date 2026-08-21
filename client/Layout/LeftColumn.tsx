@@ -25,6 +25,10 @@ export function LeftColumn(props: {
     c => c.Combatant == activeCombatant
   );
 
+  const inventoryDisplayedCombatantId = useSubscription(
+    props.tracker.CombatantCommander.InventoryDisplayedCombatantId
+  );
+
   return (
     <div
       className="left-column"
@@ -38,7 +42,17 @@ export function LeftColumn(props: {
         />
       )}
       {librariesVisible || (
-        <ActiveCombatant activeCombatantViewModel={activeCombatantViewModel} />
+        <ActiveCombatant
+          activeCombatantViewModel={activeCombatantViewModel}
+          isInventoryDisplayedToPlayers={
+            !!activeCombatantViewModel &&
+            inventoryDisplayedCombatantId ===
+              activeCombatantViewModel.Combatant.Id
+          }
+          onToggleInventoryDisplayToPlayers={
+            props.tracker.CombatantCommander.ToggleInventoryDisplayToPlayers
+          }
+        />
       )}
     </div>
   );
@@ -46,6 +60,10 @@ export function LeftColumn(props: {
 
 function ActiveCombatant(props: {
   activeCombatantViewModel: CombatantViewModel;
+  isInventoryDisplayedToPlayers: boolean;
+  onToggleInventoryDisplayToPlayers: (
+    combatantViewModel: CombatantViewModel
+  ) => void;
 }) {
   return (
     <div className="active-combatant">
@@ -57,6 +75,10 @@ function ActiveCombatant(props: {
           combatantViewModel={props.activeCombatantViewModel}
           displayMode="active"
           key={props.activeCombatantViewModel.Combatant.Id}
+          isInventoryDisplayedToPlayers={props.isInventoryDisplayedToPlayers}
+          onToggleInventoryDisplayToPlayers={
+            props.onToggleInventoryDisplayToPlayers
+          }
         />
       )}
       {!props.activeCombatantViewModel && (

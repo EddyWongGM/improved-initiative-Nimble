@@ -12,6 +12,7 @@ interface PlayerViewCombatantProps {
   resourcesColumnVisible: boolean;
   hitDiceColumnVisible: boolean;
   woundsColumnVisible: boolean;
+  inventoryColumnVisible: boolean;
   goldColumnVisible: boolean;
   reactionTrackerVisible: boolean;
   colorVisible: boolean;
@@ -117,6 +118,16 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
               style={{ color: this.props.combatant.WoundsColor }}
               dangerouslySetInnerHTML={{
                 __html: this.props.combatant.WoundsDisplay || ""
+              }}
+            />
+          </div>
+        )}
+        {this.props.inventoryColumnVisible && (
+          <div className="combatant__inventory">
+            <span
+              style={{ color: this.props.combatant.InventoryColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.InventoryDisplay || ""
               }}
             />
           </div>

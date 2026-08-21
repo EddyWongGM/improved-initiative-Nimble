@@ -1,7 +1,7 @@
 import { now } from "moment";
 import { StatBlock } from "./StatBlock";
 import { probablyUniqueString } from "./Toolbox";
-import { TagState } from "./CombatantState";
+import { InventoryItem, TagState } from "./CombatantState";
 
 export interface PersistentCharacter {
   Id: string;
@@ -18,6 +18,7 @@ export interface PersistentCharacter {
   StatBlock: StatBlock;
   Notes: string;
   Tags?: TagState[];
+  Items?: InventoryItem[];
 }
 
 export namespace PersistentCharacter {
@@ -36,7 +37,8 @@ export namespace PersistentCharacter {
       CurrentGold: 0,
       StatBlock: statBlock,
       Notes: "",
-      Tags: []
+      Tags: [],
+      Items: []
     };
   }
 

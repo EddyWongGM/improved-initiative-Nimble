@@ -12,6 +12,9 @@ export function SelectedCombatants(props: {
   const selectedCombatants = useSubscription(
     combatantCommander.SelectedCombatants
   );
+  const inventoryDisplayedCombatantId = useSubscription(
+    combatantCommander.InventoryDisplayedCombatantId
+  );
 
   if (selectedCombatants.length === 0) {
     return (
@@ -35,6 +38,13 @@ export function SelectedCombatants(props: {
           key={selectedCombatants[0].Combatant.Id}
           combatantViewModel={selectedCombatants[0]}
           displayMode="default"
+          isInventoryDisplayedToPlayers={
+            inventoryDisplayedCombatantId ===
+            selectedCombatants[0].Combatant.Id
+          }
+          onToggleInventoryDisplayToPlayers={
+            combatantCommander.ToggleInventoryDisplayToPlayers
+          }
         />
       </div>
     );

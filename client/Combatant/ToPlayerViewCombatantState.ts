@@ -23,6 +23,8 @@ export function ToPlayerViewCombatantState(
     WoundsColor: GetWoundsColor(combatant),
     GoldDisplay: GetGoldDisplay(combatant),
     GoldColor: GetGoldColor(combatant),
+    InventoryDisplay: GetInventoryDisplay(combatant),
+    InventoryColor: GetInventoryColor(combatant),
     Initiative: combatant.Initiative(),
     IsPlayerCharacter: combatant.IsPlayerCharacter(),
     Tags: combatant
@@ -323,6 +325,26 @@ function GetGoldColor(combatant: Combatant): string | undefined {
   }
 
   return "rgb(212,163,42)";
+}
+
+function GetInventoryDisplay(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedItems()) {
+    return undefined;
+  }
+
+  return `${combatant.InventorySlotsUsed()}/${combatant.MaxInventorySlots()}`;
+}
+
+function GetInventoryColor(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedItems()) {
+    return undefined;
+  }
+
+  if (combatant.InventorySlotsUsed() > combatant.MaxInventorySlots()) {
+    return "rgb(200,30,30)";
+  }
+
+  return "rgb(139,90,43)";
 }
 
 function GetHPColor(combatant: Combatant) {

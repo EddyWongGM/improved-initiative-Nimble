@@ -59,6 +59,12 @@
     margin-left: @larger-spacer;
   }
 
+  .combatant__inventory {
+    flex-basis: 6%;
+    align-items: center;
+    margin-left: @larger-spacer;
+  }
+
   .combatant__gold {
     flex-basis: 6%;
     align-items: center;
@@ -209,6 +215,33 @@
     flex-flow: row;
     justify-content: space-between;
     flex-basis: 100%;
+  }
+
+  .inventory-display-popup {
+    .suggestion-prompt();
+  }
+
+  .inventory-display {
+    flex: 1;
+
+    ul {
+      list-style-type: none;
+      margin: 0;
+    }
+
+    li {
+      padding: @medium-spacer;
+
+      &:nth-child(2n-1) {
+        background-color: var(--zebra-white);
+      }
+    }
+  }
+
+  .inventory-display__header {
+    margin: @medium-spacer;
+    flex-flow: row;
+    justify-content: space-between;
   }
 
   /* Add Animation */

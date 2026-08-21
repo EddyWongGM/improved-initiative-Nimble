@@ -31,6 +31,7 @@ import { SubtractGoldPrompt } from "../Prompts/SubtractGoldPrompt";
 import { ConcentrationPrompt } from "../Prompts/ConcentrationPrompt";
 import { ShowDiceRollPrompt } from "../Prompts/RollDicePrompt";
 import { TagPrompt } from "../Prompts/TagPrompt";
+import { ItemPrompt } from "../Prompts/ItemPrompt";
 import { UpdateNotesPrompt } from "../Prompts/UpdateNotesPrompt";
 import { ApplyTemporaryHPPrompt } from "../Prompts/ApplyTemporaryHPPrompt";
 import { ApplyTemporaryManaPrompt } from "../Prompts/ApplyTemporaryManaPrompt";
@@ -49,6 +50,7 @@ interface PendingLinkInitiative {
 export class CombatantCommander {
   private selectedCombatantIds = ko.observableArray<string>([]);
   private latestRoll: RollResult;
+  public InventoryDisplayedCombatantId = ko.observable<string>(null);
 
   constructor(private tracker: TrackerViewModel) {
     this.Commands = BuildCombatantCommandList(this);
@@ -654,6 +656,63 @@ export class CombatantCommander {
     return false;
   };
 
+  public AddItem = (combatantVM?: CombatantViewModel) => {
+    let targetCombatants: Combatant[] = [];
+
+    if (combatantVM instanceof CombatantViewModel) {
+      targetCombatants = [combatantVM.Combatant];
+    } else {
+      targetCombatants = this.SelectedCombatants().map(c => c.Combatant);
+    }
+
+    if (targetCombatants.length == 0) {
+      return;
+    }
+
+    const prompt = ItemPrompt(targetCombatants, this.tracker.EventLog.AddEvent);
+    this.tracker.PromptQueue.Add(prompt);
+    return false;
+  };
+
+  public AddItemTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.AddItem(combatantViewModel);
+  };
+
+  public ToggleInventoryDisplayToPlayers = (
+    combatantVM?: CombatantViewModel
+  ) => {
+    const targetCombatantVM =
+      combatantVM instanceof CombatantViewModel
+        ? combatantVM
+        : this.HasOneSelected()
+          ? this.SelectedCombatants()[0]
+          : null;
+
+    if (!targetCombatantVM) {
+      return false;
+    }
+
+    const combatant = targetCombatantVM.Combatant;
+
+    if (this.InventoryDisplayedCombatantId() === combatant.Id) {
+      this.tracker.Encounter.HidePlayerViewInventory();
+      this.InventoryDisplayedCombatantId(null);
+      this.tracker.EventLog.AddEvent(
+        `${combatant.DisplayName()}'s inventory hidden in Player View.`
+      );
+    } else {
+      this.tracker.Encounter.DisplayPlayerViewInventory(
+        combatant.DisplayName(),
+        combatant.Items()
+      );
+      this.InventoryDisplayedCombatantId(combatant.Id);
+      this.tracker.EventLog.AddEvent(
+        `${combatant.DisplayName()}'s inventory shown in Player View.`
+      );
+    }
+    return false;
+  };
+
   public EditInitiative = () => {
     this.SelectedCombatants().forEach(c => c.EditInitiative());
     return false;
@@ -797,6 +856,14 @@ export class CombatantCommander {
     }
 
     this.SelectedCombatants().forEach(c => c.ToggleRevealedGold());
+  };
+
+  public ToggleRevealedItems = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedItems());
   };
 
   public ToggleRevealedHitDice = () => {

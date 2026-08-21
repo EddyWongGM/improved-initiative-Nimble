@@ -220,6 +220,101 @@ describe("Combatant", () => {
     });
   });
 
+  describe("Inventory", () => {
+    test("MaxInventorySlots is 10 plus the Strength modifier", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Abilities: { ...StatBlock.Default().Abilities, Str: 10 }
+      });
+      expect(combatant.MaxInventorySlots()).toBe(10);
+
+      combatant.StatBlock({
+        ...StatBlock.Default(),
+        Abilities: { ...StatBlock.Default().Abilities, Str: 14 }
+      });
+      expect(combatant.MaxInventorySlots()).toBe(12);
+
+      combatant.StatBlock({
+        ...StatBlock.Default(),
+        Abilities: { ...StatBlock.Default().Abilities, Str: 6 }
+      });
+      expect(combatant.MaxInventorySlots()).toBe(8);
+    });
+
+    test("ApplyItemChange creates a new stackable item, and further calls merge into it instead of duplicating", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+
+      combatant.ApplyItemChange("Torch", true, 4, 1);
+      expect(combatant.Items()).toEqual([
+        { Name: "Torch", Stackable: true, Quantity: 4, SlotCost: 1 }
+      ]);
+
+      combatant.ApplyItemChange("Torch", true, 3, 1);
+      expect(combatant.Items()).toEqual([
+        { Name: "Torch", Stackable: true, Quantity: 7, SlotCost: 1 }
+      ]);
+    });
+
+    test("ApplyItemChange removes a stackable item once its quantity reaches zero", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+
+      combatant.ApplyItemChange("Torch", true, 2, 1);
+      combatant.ApplyItemChange("Torch", true, -2, 1);
+
+      expect(combatant.Items()).toEqual([]);
+    });
+
+    test("ApplyItemChange with stackable=false always adds a separate row", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+
+      combatant.ApplyItemChange("Bedroll", false, 1, 2);
+      combatant.ApplyItemChange("Bedroll", false, 1, 2);
+
+      expect(combatant.Items()).toEqual([
+        { Name: "Bedroll", Stackable: false, Quantity: 1, SlotCost: 2 },
+        { Name: "Bedroll", Stackable: false, Quantity: 1, SlotCost: 2 }
+      ]);
+    });
+
+    test("InventorySlotsUsed sums SlotCost per row - a stack costs 1 slot regardless of quantity", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+
+      combatant.ApplyItemChange("Torch", true, 40, 1);
+      combatant.ApplyItemChange("Bedroll", false, 1, 2);
+
+      expect(combatant.InventorySlotsUsed()).toBe(3);
+    });
+
+    test("RemoveItem removes exactly the row passed in", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+
+      combatant.ApplyItemChange("Torch", true, 4, 1);
+      combatant.ApplyItemChange("Bedroll", false, 1, 2);
+      const torch = combatant.Items()[0];
+
+      combatant.RemoveItem(torch);
+
+      expect(combatant.Items()).toEqual([
+        { Name: "Bedroll", Stackable: false, Quantity: 1, SlotCost: 2 }
+      ]);
+    });
+  });
+
   describe("Persistent tags for player characters", () => {
     test("Only non-duration tags sync to the PersistentCharacter", async () => {
       const persistentCharacter = PersistentCharacter.Initialize({
@@ -240,6 +335,28 @@ describe("Combatant", () => {
         persistentCharacter.Id,
         {
           Tags: [expect.objectContaining({ Text: "Cursed by the Baron" })]
+        }
+      );
+    });
+
+    test("Items sync to the PersistentCharacter", async () => {
+      const persistentCharacter = PersistentCharacter.Initialize({
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      const updatePersistentCharacter = jest.fn(async () => null);
+      const combatant = await encounter.AddCombatantFromPersistentCharacter(
+        persistentCharacter,
+        updatePersistentCharacter,
+        false
+      );
+
+      combatant.ApplyItemChange("Torch", true, 4, 1);
+
+      expect(updatePersistentCharacter).toHaveBeenLastCalledWith(
+        persistentCharacter.Id,
+        {
+          Items: [{ Name: "Torch", Stackable: true, Quantity: 4, SlotCost: 1 }]
         }
       );
     });
@@ -414,6 +531,60 @@ describe("Combatant", () => {
       combatant.CurrentGold(50);
       combatant.RevealedGold(true);
       expect(ToPlayerViewCombatantState(combatant).GoldDisplay).toEqual("50");
+    });
+
+    test("InventoryDisplay is undefined for a monster", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default()
+      });
+      combatant.ApplyItemChange("Torch", true, 1, 1);
+      expect(
+        ToPlayerViewCombatantState(combatant).InventoryDisplay
+      ).toBeUndefined();
+    });
+
+    test("InventoryDisplay is undefined for a player character whose inventory is not revealed", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.ApplyItemChange("Torch", true, 1, 1);
+      expect(combatant.RevealedItems()).toBe(false);
+      expect(
+        ToPlayerViewCombatantState(combatant).InventoryDisplay
+      ).toBeUndefined();
+    });
+
+    test("InventoryDisplay shows slots used over max once a player character's inventory is revealed", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      combatant.ApplyItemChange("Torch", true, 1, 1);
+      combatant.ApplyItemChange("Bedroll", false, 1, 2);
+      combatant.RevealedItems(true);
+
+      expect(ToPlayerViewCombatantState(combatant).InventoryDisplay).toEqual(
+        "3/10"
+      );
+      expect(ToPlayerViewCombatantState(combatant).InventoryColor).toEqual(
+        "rgb(139,90,43)"
+      );
+    });
+
+    test("InventoryColor turns warning-red once slots used exceeds MaxInventorySlots", () => {
+      const combatant = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "player"
+      });
+      for (let i = 0; i < 11; i++) {
+        combatant.ApplyItemChange(`Item ${i}`, false, 1, 1);
+      }
+      combatant.RevealedItems(true);
+
+      expect(ToPlayerViewCombatantState(combatant).InventoryColor).toEqual(
+        "rgb(200,30,30)"
+      );
     });
 
     test("IndexLabel is not forced onto a companion by AlwaysNumberMonsters, same as a player character", () => {

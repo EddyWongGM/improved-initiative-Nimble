@@ -1,6 +1,7 @@
 import { Socket } from "socket.io-client";
 import { CombatStats } from "../../common/CombatStats";
 import { EncounterState } from "../../common/EncounterState";
+import { InventoryDisplayPayload } from "../../common/InventoryDisplay";
 import { PlayerViewCombatantState } from "../../common/PlayerViewCombatantState";
 import { PlayerViewSettings } from "../../common/PlayerViewSettings";
 import _ = require("lodash");
@@ -10,6 +11,13 @@ export class PlayerViewClient {
 
   public DisplayCombatStats(encounterId: string, stats: CombatStats) {
     this.socket.emit("combat stats", encounterId, stats);
+  }
+
+  public DisplayInventory(
+    encounterId: string,
+    inventory: InventoryDisplayPayload | null
+  ) {
+    this.socket.emit("display inventory", encounterId, inventory);
   }
 
   public JoinEncounter(encounterId: string): any {

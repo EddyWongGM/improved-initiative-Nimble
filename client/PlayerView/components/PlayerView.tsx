@@ -4,12 +4,14 @@ import * as _ from "lodash";
 
 import { CombatStats } from "../../../common/CombatStats";
 import { TagState } from "../../../common/CombatantState";
+import { InventoryDisplayPayload } from "../../../common/InventoryDisplay";
 import { PlayerViewCombatantState } from "../../../common/PlayerViewCombatantState";
 import { PlayerViewState } from "../../../common/PlayerViewState";
 import { CombatFooter } from "./CombatFooter";
 import { CombatStatsPopup } from "./CombatStatsPopup";
 import { CustomStyles } from "./CustomStyles";
 import { ApplyDamageCallback, DamageSuggestor } from "./DamageSuggestor";
+import { InventoryDisplayPopup } from "./InventoryDisplayPopup";
 import { PlayerViewCombatant } from "./PlayerViewCombatant";
 import { PlayerViewCombatantHeader } from "./PlayerViewCombatantHeader";
 import { PortraitWithCaption } from "./PortraitModal";
@@ -18,6 +20,7 @@ import { ApplyTagCallback, TagSuggestor } from "./TagSuggestor";
 interface LocalState {
   showPortrait: boolean;
   showCombatStats: boolean;
+  showInventoryDisplay: boolean;
   portraitWasRequestedByClick: boolean;
   portraitURL: string;
   portraitCaption: string;
@@ -30,6 +33,7 @@ interface OwnProps {
   onSuggestDamage: ApplyDamageCallback;
   onSuggestTag: (combatantId: string, tagState: TagState) => void;
   combatStats?: CombatStats;
+  inventoryDisplay?: InventoryDisplayPayload;
 }
 
 export type PlayerViewProps = PlayerViewState & OwnProps;
@@ -41,6 +45,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
     this.state = {
       showPortrait: false,
       showCombatStats: false,
+      showInventoryDisplay: false,
       portraitWasRequestedByClick: false,
       portraitURL: "",
       portraitCaption: "",
@@ -75,6 +80,10 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
       c => c.WoundsDisplay != undefined
     );
 
+    const inventoryColumnVisible = this.props.encounterState.Combatants.some(
+      c => c.InventoryDisplay != undefined
+    );
+
     const goldColumnVisible = this.props.encounterState.Combatants.some(
       c => c.GoldDisplay != undefined
     );
@@ -83,7 +92,8 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
       this.state.showPortrait ||
       this.state.suggestDamageCombatant ||
       this.state.suggestTagCombatant ||
-      this.state.showCombatStats;
+      this.state.showCombatStats ||
+      this.state.showInventoryDisplay;
 
     const combatantsById = _.keyBy(
       this.props.encounterState.Combatants,
@@ -127,6 +137,9 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
         {this.state.showCombatStats && (
           <CombatStatsPopup stats={this.props.combatStats} />
         )}
+        {this.state.showInventoryDisplay && this.props.inventoryDisplay && (
+          <InventoryDisplayPopup inventory={this.props.inventoryDisplay} />
+        )}
         <PlayerViewCombatantHeader
           portraitColumnVisible={this.hasImages()}
           acColumnVisible={acColumnVisible}
@@ -134,6 +147,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
           resourcesColumnVisible={resourcesColumnVisible}
           hitDiceColumnVisible={hitDiceColumnVisible}
           woundsColumnVisible={woundsColumnVisible}
+          inventoryColumnVisible={inventoryColumnVisible}
           goldColumnVisible={goldColumnVisible}
         />
         <ul className="combatants">
@@ -153,6 +167,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
               resourcesColumnVisible={resourcesColumnVisible}
               hitDiceColumnVisible={hitDiceColumnVisible}
               woundsColumnVisible={woundsColumnVisible}
+              inventoryColumnVisible={inventoryColumnVisible}
               goldColumnVisible={goldColumnVisible}
               reactionTrackerVisible={
                 this.props.settings.DisplayReactionTracker
@@ -180,9 +195,10 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
     );
   }
 
-  public componentDidUpdate(prevProps: PlayerViewState) {
+  public componentDidUpdate(prevProps: PlayerViewProps) {
     this.splashPortraitIfNeeded(prevProps.encounterState.ActiveCombatantId);
     this.showCombatStatsIfNeeded(prevProps.combatStats);
+    this.showInventoryDisplayIfNeeded(prevProps.inventoryDisplay);
     this.scrollToActiveCombatant();
   }
 
@@ -230,6 +246,25 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
     }
   }
 
+  private showInventoryDisplayIfNeeded(
+    prevInventoryDisplay: InventoryDisplayPayload
+  ) {
+    if (!this.props.inventoryDisplay) {
+      if (this.state.showInventoryDisplay) {
+        this.setState({
+          showInventoryDisplay: false
+        });
+      }
+      return;
+    }
+
+    if (this.props.inventoryDisplay != prevInventoryDisplay) {
+      this.setState({
+        showInventoryDisplay: true
+      });
+    }
+  }
+
   private scrollToActiveCombatant() {
     const activeCombatantElement = document.getElementsByClassName("active")[0];
     if (activeCombatantElement?.scrollIntoView) {
@@ -255,6 +290,7 @@ export class PlayerView extends React.Component<PlayerViewProps, LocalState> {
     this.setState({
       showPortrait: false,
       showCombatStats: false,
+      showInventoryDisplay: false,
       portraitWasRequestedByClick: false,
       suggestDamageCombatant: null,
       suggestTagCombatant: null

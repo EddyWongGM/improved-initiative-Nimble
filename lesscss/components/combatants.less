@@ -188,10 +188,10 @@
     display: grid;
     /* prettier-ignore */
     grid-template:
-      "leftgutter image name           mana         resources hitdice  wounds   hp       ac       gold"
-      "leftgutter image divider        divider      divider   divider  divider  divider  divider  divider"
-      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands" /
-       auto auto  minmax(0, 1fr) auto     auto      auto     auto     auto     auto     auto;
+      "leftgutter image name           mana         resources hitdice  wounds   hp       ac       itemsslots gold"
+      "leftgutter image divider        divider      divider   divider  divider  divider  divider  divider    divider"
+      "leftgutter image tagsCommands   tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands tagsCommands" /
+       auto auto  minmax(0, 1fr) auto     auto      auto     auto     auto     auto     auto       auto;
 
     &::before {
       content: "";
@@ -388,6 +388,18 @@
   }
 }
 
+.combatant__items-slots {
+  width: 4rem;
+  justify-content: center;
+  grid-area: itemsslots;
+
+  @media (max-width: @medium) {
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+  }
+}
+
 .combatant__gold {
   width: 3.5rem;
   justify-content: center;
@@ -418,6 +430,12 @@
 }
 
 .combatant__hitdice--hidden-badge {
+  font-size: 80%;
+  margin-left: @extra-small-spacer;
+  color: var(--text-faded);
+}
+
+.combatant__items-slots--hidden-badge {
   font-size: 80%;
   margin-left: @extra-small-spacer;
   color: var(--text-faded);

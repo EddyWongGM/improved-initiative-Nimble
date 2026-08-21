@@ -7,6 +7,7 @@ export function InitiativeListHeader(props: {
   showResourcesColumn: boolean;
   showHitDiceColumn: boolean;
   showWoundsColumn: boolean;
+  showItemsColumn: boolean;
   showGoldColumn: boolean;
 }) {
   const settings = React.useContext(SettingsContext);
@@ -85,6 +86,18 @@ export function InitiativeListHeader(props: {
               title="Wounds"
               aria-hidden="true"
               style={{ color: "rgb(200,30,180)" }}
+            ></span>
+          </th>
+        )}
+
+        {props.showItemsColumn && (
+          <th className="combatant__items-slots">
+            <span className="screen-reader-only">Inventory</span>
+            <span
+              className="fas fa-gem"
+              title="Inventory"
+              aria-hidden="true"
+              style={{ color: "rgb(139,90,43)" }}
             ></span>
           </th>
         )}

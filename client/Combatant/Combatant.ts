@@ -1,6 +1,6 @@
 import * as ko from "knockout";
 
-import { CombatantState } from "../../common/CombatantState";
+import { CombatantState, InventoryItem } from "../../common/CombatantState";
 import { InitiativeSpecialRoll, StatBlock } from "../../common/StatBlock";
 import { probablyUniqueString } from "../../common/Toolbox";
 import { Encounter } from "../Encounter/Encounter";
@@ -10,6 +10,7 @@ import { NotifyTutorialOfAction } from "../Tutorial/NotifyTutorialOfAction";
 import { Metrics } from "../Utility/Metrics";
 import { CombatTimer } from "../Widgets/CombatTimer";
 import { Tag } from "./Tag";
+import { GetInventorySlotsUsed } from "./InventorySlots";
 import { RollResult } from "../Rules/RollResult";
 import { AbilityCheckResult } from "../Rules/Rules";
 import { AutoGroupInitiativeOption } from "../../common/Settings";
@@ -70,6 +71,7 @@ export class Combatant {
   public TemporaryHitDice = ko.observable(0);
   public TemporaryWounds = ko.observable(0);
   public Tags = ko.observableArray<Tag>();
+  public Items = ko.observableArray<InventoryItem>();
   public Initiative = ko.observable(0);
   public InitiativeGroup = ko.observable<string>(null);
   public StatBlock = ko.observable<StatBlock>(StatBlock.Default());
@@ -77,6 +79,7 @@ export class Combatant {
   public KeepHidden = ko.observable(false);
   public RevealedAC = ko.observable(false);
   public RevealedGold = ko.observable(true);
+  public RevealedItems = ko.observable(true);
   public RevealedHitDice = ko.observable(true);
   public HasTakenTurn = ko.observable(false);
   public IndexLabel = ko.observable(0);
@@ -131,10 +134,12 @@ export class Combatant {
     );
     this.Alias(savedCombatant.Alias);
     this.Tags(Tag.FromTagStates(savedCombatant.Tags, this));
+    this.Items(savedCombatant.Items ?? []);
     this.Hidden(savedCombatant.Hidden);
     this.KeepHidden(savedCombatant.KeepHidden ?? false);
     this.RevealedAC(savedCombatant.RevealedAC);
     this.RevealedGold(savedCombatant.RevealedGold ?? true);
+    this.RevealedItems(savedCombatant.RevealedItems ?? true);
     this.RevealedHitDice(savedCombatant.RevealedHitDice ?? true);
     this.HasTakenTurn(savedCombatant.HasTakenTurn || false);
     this.Color(savedCombatant.Color || "");
@@ -202,6 +207,12 @@ export class Combatant {
         .map(t => t.GetState());
       return await updatePersistentCharacter(persistentCharacterId, {
         Tags: persistentTags
+      });
+    });
+
+    this.Items.subscribe(async items => {
+      return await updatePersistentCharacter(persistentCharacterId, {
+        Items: items
       });
     });
   }
@@ -296,6 +307,16 @@ export class Combatant {
 
   public MaxWounds = ko.computed(() =>
     this.ActsInPlayerPhase() ? this.StatBlock().Wounds?.Value : undefined
+  );
+
+  public MaxInventorySlots = ko.computed(
+    () =>
+      10 +
+      this.Encounter.Rules.GetModifierFromScore(this.StatBlock().Abilities.Str)
+  );
+
+  public InventorySlotsUsed = ko.computed(() =>
+    GetInventorySlotsUsed(this.Items())
   );
 
   public GetInitiativeRoll: () => AbilityCheckResult = () => {
@@ -444,6 +465,79 @@ export class Combatant {
     this.CurrentGold(currentGold);
   }
 
+  public ApplyItemChange(
+    itemName: string,
+    stackable: boolean,
+    quantityDelta: number,
+    slotCost: number
+  ) {
+    const items = this.Items();
+
+    if (stackable) {
+      const existingIndex = items.findIndex(
+        i => i.Stackable && i.Name === itemName
+      );
+
+      if (existingIndex >= 0) {
+        const existing = items[existingIndex];
+        const newQuantity = existing.Quantity + quantityDelta;
+        const newItems = items.slice();
+        if (newQuantity <= 0) {
+          newItems.splice(existingIndex, 1);
+        } else {
+          newItems.splice(existingIndex, 1, {
+            ...existing,
+            Quantity: newQuantity
+          });
+        }
+        this.Items(newItems);
+        return;
+      }
+
+      if (quantityDelta <= 0) {
+        return;
+      }
+
+      this.Items([
+        ...items,
+        {
+          Name: itemName,
+          Stackable: true,
+          Quantity: quantityDelta,
+          SlotCost: 1
+        }
+      ]);
+      return;
+    }
+
+    this.Items([
+      ...items,
+      { Name: itemName, Stackable: false, Quantity: 1, SlotCost: slotCost }
+    ]);
+  }
+
+  public RemoveItem(item: InventoryItem) {
+    this.Items.remove(item);
+  }
+
+  public MoveItem(fromIndex: number, toIndex: number) {
+    const items = this.Items();
+    if (
+      fromIndex < 0 ||
+      fromIndex >= items.length ||
+      toIndex < 0 ||
+      toIndex >= items.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+
+    const newItems = items.slice();
+    const [movedItem] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, movedItem);
+    this.Items(newItems);
+  }
+
   public ApplyWoundsChange(amount: number) {
     const maxWounds = this.MaxWounds() ?? 0;
     let currentWounds = this.CurrentWounds();
@@ -545,6 +639,8 @@ export class Combatant {
       Tags: this.Tags()
         .filter(t => t.NotExpired())
         .map(t => t.GetState()),
+      Items: this.Items(),
+      RevealedItems: this.RevealedItems(),
       Hidden: this.Hidden(),
       KeepHidden: this.KeepHidden(),
       RevealedAC: this.RevealedAC(),

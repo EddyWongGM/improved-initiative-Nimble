@@ -120,6 +120,19 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
     [tracker]
   );
 
+  const addItemToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.AddItemTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
   const moveCombatantFromDrag = useCallback(
     (draggedCombatantId: string, droppedOntoCombatantId: string | null) => {
       const combatants = tracker.Encounter.Combatants();
@@ -185,6 +198,7 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
         ApplyHitDiceToCombatant: applyHitDiceToCombatant,
         ApplyWoundsToCombatant: applyWoundsToCombatant,
         ApplyGoldToCombatant: applyGoldToCombatant,
+        AddItemToCombatant: addItemToCombatant,
         CombatantCommands: tracker.CombatantCommander.Commands,
         MoveCombatantFromDrag: moveCombatantFromDrag,
         SetCombatantColor: setCombatantColor,

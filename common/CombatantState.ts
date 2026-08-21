@@ -9,6 +9,13 @@ export interface TagState {
   Hidden?: boolean;
 }
 
+export interface InventoryItem {
+  Name: string;
+  Stackable: boolean;
+  Quantity: number;
+  SlotCost: number;
+}
+
 export interface CombatantState {
   Id: string;
   StatBlock: StatBlock;
@@ -34,6 +41,8 @@ export interface CombatantState {
   Alias: string;
   IndexLabel: number | null;
   Tags: TagState[];
+  Items?: InventoryItem[];
+  RevealedItems?: boolean;
   Hidden: boolean;
   KeepHidden?: boolean;
   RevealedAC: boolean;

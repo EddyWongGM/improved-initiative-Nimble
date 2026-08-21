@@ -180,6 +180,20 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
+    id: "toggle-reveal-hit-dice",
+    description: "Hide/Reveal Hit Dice in Player View",
+    actionBinding: c.ToggleRevealedHitDice,
+    fontAwesomeIcon: "dice-d6",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "show-inventory",
+    description: "Show/Hide Inventory in Player View Popup",
+    actionBinding: () => c.ToggleInventoryDisplayToPlayers(),
+    fontAwesomeIcon: "gem",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
     id: "toggle-reveal-gold",
     description: "Hide/Reveal Gold in Player View",
     actionBinding: c.ToggleRevealedGold,
@@ -187,11 +201,19 @@ export const BuildCombatantCommandList: (
     defaultShowOnActionBar: false
   }),
   new Command({
-    id: "toggle-reveal-hit-dice",
-    description: "Hide/Reveal Hit Dice in Player View",
-    actionBinding: c.ToggleRevealedHitDice,
-    fontAwesomeIcon: "dice-d6",
+    id: "toggle-reveal-items",
+    description: "Hide/Reveal Inventory in Player View",
+    actionBinding: c.ToggleRevealedItems,
+    fontAwesomeIcon: "box-open",
     defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "add-item",
+    description: "Add Item",
+    actionBinding: c.AddItem,
+    fontAwesomeIcon: "box-open",
+    defaultShowOnActionBar: false,
+    defaultShowInCombatantRow: true
   }),
   new Command({
     id: "edit-statblock",

@@ -6,7 +6,8 @@ import * as Sentry from "@sentry/browser";
 import * as _ from "lodash";
 
 import { CombatStats } from "../../common/CombatStats";
-import { CombatantState } from "../../common/CombatantState";
+import { CombatantState, InventoryItem } from "../../common/CombatantState";
+import { InventoryDisplayPayload } from "../../common/InventoryDisplay";
 import {
   EncounterSaveDefaults,
   EncounterState
@@ -229,6 +230,7 @@ export class Encounter {
         Hidden: hideOnAdd,
         RevealedAC: false,
         RevealedGold: false,
+        RevealedItems: false,
         RevealedHitDice: true,
         Initiative: 0,
         Tags: [],
@@ -279,9 +281,11 @@ export class Encounter {
       Hidden: hideOnAdd,
       RevealedAC: false,
       RevealedGold: false,
+      RevealedItems: false,
       RevealedHitDice: true,
       Initiative: initiativeValue,
       Tags: persistentCharacter.Tags ?? [],
+      Items: persistentCharacter.Items ?? [],
       RoundCounter: 0,
       ElapsedSeconds: 0,
       InterfaceVersion: persistentCharacter.Version
@@ -589,5 +593,17 @@ export class Encounter {
 
   public DisplayPlayerViewCombatStats(stats: CombatStats) {
     this.playerViewClient.DisplayCombatStats(env.EncounterId, stats);
+  }
+
+  public DisplayPlayerViewInventory(
+    combatantName: string,
+    items: InventoryItem[]
+  ) {
+    const inventory: InventoryDisplayPayload = { combatantName, items };
+    this.playerViewClient.DisplayInventory(env.EncounterId, inventory);
+  }
+
+  public HidePlayerViewInventory() {
+    this.playerViewClient.DisplayInventory(env.EncounterId, null);
   }
 }

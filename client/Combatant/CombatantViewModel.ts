@@ -358,6 +358,22 @@ export class CombatantViewModel {
     }
   }
 
+  public ToggleRevealedItems() {
+    if (this.Combatant.RevealedItems()) {
+      this.Combatant.RevealedItems(false);
+      this.LogEvent(`${this.Name()} inventory hidden in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantItemsHidden, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.RevealedItems(true);
+      this.LogEvent(`${this.Name()} inventory revealed in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantItemsRevealed, {
+        name: this.Name()
+      });
+    }
+  }
+
   public ToggleRevealedHitDice() {
     if (this.Combatant.RevealedHitDice()) {
       this.Combatant.RevealedHitDice(false);

@@ -11,6 +11,7 @@ export const PlayerViewCombatantHeader = (props: {
   resourcesColumnVisible: boolean;
   hitDiceColumnVisible: boolean;
   woundsColumnVisible: boolean;
+  inventoryColumnVisible: boolean;
   goldColumnVisible: boolean;
 }) => (
   <div className="combatant--header">
@@ -39,6 +40,14 @@ export const PlayerViewCombatantHeader = (props: {
         <span
           className="fas fa-skull-crossbones"
           style={{ color: "rgb(200,30,180)" }}
+        />
+      </div>
+    )}
+    {props.inventoryColumnVisible && (
+      <div className="combatant__inventory">
+        <span
+          className="fas fa-gem"
+          style={{ color: "rgb(139,90,43)" }}
         />
       </div>
     )}
