@@ -9,6 +9,11 @@ interface PlayerViewCombatantProps {
   portraitColumnVisible: boolean;
   acColumnVisible: boolean;
   manaColumnVisible: boolean;
+  resourcesColumnVisible: boolean;
+  hitDiceColumnVisible: boolean;
+  woundsColumnVisible: boolean;
+  inventoryColumnVisible: boolean;
+  goldColumnVisible: boolean;
   reactionTrackerVisible: boolean;
   colorVisible: boolean;
   areSuggestionsAllowed: boolean;
@@ -40,14 +45,29 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
             )}
           </div>
         )}
-        <div className="combatant__name">
+        <div
+          className={
+            "combatant__name" +
+            (this.props.combatant.HasTakenTurn
+              ? " combatant__name--taken-turn"
+              : "")
+          }
+        >
           {this.props.combatant.Color && hasColor && (
             <span
               className="combatant__color fas fa-circle"
               style={{ color: this.props.combatant.Color }}
             />
           )}
-          {this.props.combatant.Name}
+          {this.props.combatant.HasTakenTurn && (
+            <span className="combatant__has-taken-turn-icon fas fa-check" />
+          )}
+          {this.props.combatant.IndexLabel !== undefined && (
+            <strong className="combatant__index-label">
+              {this.props.combatant.IndexLabel}
+            </strong>
+          )}
+          {baseCombatantName(this.props.combatant)}
         </div>
         <div
           className={
@@ -72,8 +92,56 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
             />
           </div>
         )}
+        {this.props.resourcesColumnVisible && (
+          <div className="combatant__resources">
+            <span
+              style={{ color: this.props.combatant.ResourcesColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.ResourcesDisplay || ""
+              }}
+            />
+          </div>
+        )}
+        {this.props.hitDiceColumnVisible && (
+          <div className="combatant__hitdice">
+            <span
+              style={{ color: this.props.combatant.HitDiceColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.HitDiceDisplay || ""
+              }}
+            />
+          </div>
+        )}
+        {this.props.woundsColumnVisible && (
+          <div className="combatant__wounds">
+            <span
+              style={{ color: this.props.combatant.WoundsColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.WoundsDisplay || ""
+              }}
+            />
+          </div>
+        )}
+        {this.props.inventoryColumnVisible && (
+          <div className="combatant__inventory">
+            <span
+              style={{ color: this.props.combatant.InventoryColor }}
+              dangerouslySetInnerHTML={{
+                __html: this.props.combatant.InventoryDisplay || ""
+              }}
+            />
+          </div>
+        )}
         {this.props.acColumnVisible && (
           <div className="combatant__ac">{this.props.combatant.AC || ""}</div>
+        )}
+        {this.props.goldColumnVisible && (
+          <div
+            className="combatant__gold"
+            style={{ color: this.props.combatant.GoldColor }}
+          >
+            {this.props.combatant.GoldDisplay || ""}
+          </div>
         )}
         <div className="combatant__tags">
           {this.props.combatant.Tags.map((tag, index) => (
@@ -100,4 +168,14 @@ export class PlayerViewCombatant extends React.Component<PlayerViewCombatantProp
       </li>
     );
   }
+}
+
+function baseCombatantName(combatant: PlayerViewCombatantState): string {
+  if (combatant.IndexLabel === undefined) {
+    return combatant.Name;
+  }
+  const indexSuffix = ` ${combatant.IndexLabel}`;
+  return combatant.Name.endsWith(indexSuffix)
+    ? combatant.Name.slice(0, -indexSuffix.length)
+    : combatant.Name;
 }

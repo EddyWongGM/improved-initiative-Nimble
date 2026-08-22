@@ -25,6 +25,10 @@ export function LeftColumn(props: {
     c => c.Combatant == activeCombatant
   );
 
+  const inventoryDisplayedCombatantId = useSubscription(
+    props.tracker.CombatantCommander.InventoryDisplayedCombatantId
+  );
+
   return (
     <div
       className="left-column"
@@ -38,7 +42,17 @@ export function LeftColumn(props: {
         />
       )}
       {librariesVisible || (
-        <ActiveCombatant activeCombatantViewModel={activeCombatantViewModel} />
+        <ActiveCombatant
+          activeCombatantViewModel={activeCombatantViewModel}
+          isInventoryDisplayedToPlayers={
+            !!activeCombatantViewModel &&
+            inventoryDisplayedCombatantId ===
+              activeCombatantViewModel.Combatant.Id
+          }
+          onToggleInventoryDisplayToPlayers={
+            props.tracker.CombatantCommander.ToggleInventoryDisplayToPlayers
+          }
+        />
       )}
     </div>
   );
@@ -46,23 +60,31 @@ export function LeftColumn(props: {
 
 function ActiveCombatant(props: {
   activeCombatantViewModel: CombatantViewModel;
+  isInventoryDisplayedToPlayers: boolean;
+  onToggleInventoryDisplayToPlayers: (
+    combatantViewModel: CombatantViewModel
+  ) => void;
 }) {
   return (
     <div className="active-combatant">
       <div className="combatant-details__header">
-        <h2>Active Combatant</h2>
+        <h2>Active Name</h2>
       </div>
       {props.activeCombatantViewModel && (
         <CombatantDetails
           combatantViewModel={props.activeCombatantViewModel}
           displayMode="active"
           key={props.activeCombatantViewModel.Combatant.Id}
+          isInventoryDisplayedToPlayers={props.isInventoryDisplayedToPlayers}
+          onToggleInventoryDisplayToPlayers={
+            props.onToggleInventoryDisplayToPlayers
+          }
         />
       )}
       {!props.activeCombatantViewModel && (
         <p className="start-encounter-hint">
           Click [<span className="fas fa-play" /> Start Encounter ] to roll
-          initiative. The StatBlock for the Active Combatant will be displayed
+          initiative. The StatBlock for the Active Name will be displayed
           here.
         </p>
       )}

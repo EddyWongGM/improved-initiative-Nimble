@@ -173,6 +173,73 @@ export class EncounterCommander {
     Metrics.TrackEvent(Metrics.Event.InitiativeRerolled);
   };
 
+  public GroupAllMonsters = (): boolean => {
+    const monsterCombatants = this.tracker
+      .CombatantViewModels()
+      .filter(c => !c.Combatant.ActsInPlayerPhase());
+
+    if (monsterCombatants.length < 2) {
+      this.tracker.EventLog.AddEvent(
+        "Need at least two monsters in the encounter to group them."
+      );
+      return false;
+    }
+
+    this.tracker.CombatantCommander.GroupCombatants(monsterCombatants);
+    this.tracker.EventLog.AddEvent("Monsters grouped together.");
+    Metrics.TrackEvent(Metrics.Event.MonstersGrouped);
+
+    return false;
+  };
+
+  public SwapPhaseOrder = (): boolean => {
+    this.tracker.Encounter.ToggleMonstersActFirst();
+
+    this.tracker.EventLog.AddEvent(
+      this.tracker.Encounter.MonstersActFirst()
+        ? "Monsters now act first."
+        : "Player characters now act first."
+    );
+    Metrics.TrackEvent(Metrics.Event.PhaseOrderSwapped);
+
+    return false;
+  };
+
+  public ToggleAllMonstersHidden = (): boolean => {
+    const monsterCombatants = this.tracker
+      .CombatantViewModels()
+      .filter(c => !c.Combatant.ActsInPlayerPhase());
+
+    if (monsterCombatants.length === 0) {
+      return false;
+    }
+
+    const allMonstersAlreadyHidden = monsterCombatants.every(c =>
+      c.Combatant.Hidden()
+    );
+
+    if (allMonstersAlreadyHidden) {
+      // Reveal - but a monster the DM has locked hidden (KeepHidden) stays
+      // hidden regardless; that lock is a separate, deliberate override this
+      // bulk action must not clobber.
+      monsterCombatants
+        .filter(c => !c.Combatant.KeepHidden())
+        .forEach(c => c.Combatant.Hidden(false));
+
+      this.tracker.EventLog.AddEvent(
+        "All monsters revealed in player view (except any locked hidden)."
+      );
+      Metrics.TrackEvent(Metrics.Event.AllMonstersRevealed);
+    } else {
+      monsterCombatants.forEach(c => c.Combatant.Hidden(true));
+
+      this.tracker.EventLog.AddEvent("All monsters hidden from player view.");
+      Metrics.TrackEvent(Metrics.Event.AllMonstersHidden);
+    }
+
+    return false;
+  };
+
   public ClearEncounter = (): boolean => {
     if (confirm("Remove all combatants and end encounter?")) {
       this.tracker.Encounter.ClearEncounter();
@@ -188,7 +255,7 @@ export class EncounterCommander {
     if (confirm("Remove NPCs and end encounter?")) {
       const npcViewModels = this.tracker
         .CombatantViewModels()
-        .filter(c => !c.Combatant.IsPlayerCharacter());
+        .filter(c => !c.Combatant.ActsInPlayerPhase());
       this.tracker.CombatantCommander.Deselect();
       this.tracker.Encounter.EncounterFlow.EndEncounter();
       npcViewModels.forEach(vm =>

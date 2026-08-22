@@ -19,7 +19,7 @@ export const ApplyManaPrompt = (
     onSubmit: (model: ApplyManaModel) => {
       const manaAmount = parseInt(model.manaAmount);
       if (isNaN(manaAmount)) {
-        return false;
+        return true;
       }
 
       logManaChange(manaAmount, combatantNames);

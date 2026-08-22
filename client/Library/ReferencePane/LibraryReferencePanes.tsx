@@ -103,19 +103,19 @@ export class LibraryReferencePanes extends React.Component<
 
 function LibraryHeader(props: { selectedLibrary: LibraryType }) {
   const headerTexts: Record<LibraryType, string> = {
-    StatBlocks: "Add Combatants",
-    PersistentCharacters: "Add Combatants",
+    StatBlocks: "Add Names",
+    PersistentCharacters: "Add Names",
     Encounters: "Load Encounters",
     Spells: "Reference Spells"
   };
 
   const libraryInfos: Record<LibraryType, string | null> = {
     StatBlocks:
-      "When you add a Creature, a copy of its Stat Block joins the Encounter as a Combatant.",
+      "When you add a Creature, a copy of its Stat Block joins the Encounter as a Name.",
     PersistentCharacters:
       "Each Character can each only be added to an Encounter once, and they will be persistent across different Encounters.",
     Encounters:
-      "Loading an Encounter adds all of the Combatants saved in it. Characters who are already present are not duplicated.",
+      "Loading an Encounter adds all of the Names saved in it. Characters who are already present are not duplicated.",
     Spells: null
   };
 

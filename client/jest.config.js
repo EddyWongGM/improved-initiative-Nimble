@@ -20,6 +20,7 @@ module.exports = {
     "^react-dnd-touch-backend$": "react-dnd-touch-backend/dist/cjs",
     "^react-dnd-test-backend$": "react-dnd-test-backend/dist/cjs",
     "^react-dnd-test-utils$": "react-dnd-test-utils/dist/cjs",
-    "^react-markdown/lib/react-markdown$": "<rootDir>/test/reactMarkdownMock.tsx"
+    "^react-markdown/lib/react-markdown$": "<rootDir>/test/reactMarkdownMock.tsx",
+    "^remark-breaks$": "<rootDir>/test/remarkBreaksMock.ts"
   }
 };

@@ -1,5 +1,6 @@
 import { buildEncounter } from "../test/buildEncounter";
 
+import { PersistentCharacter } from "../../common/PersistentCharacter";
 import { StatBlock } from "../../common/StatBlock";
 import { Tag } from "../Combatant/Tag";
 import { InitializeTestSettings } from "../test/InitializeTestSettings";
@@ -184,6 +185,43 @@ describe("Encounter", () => {
       encounter.EncounterFlow.StartEncounter();
       expect(encounter.Combatants()).toEqual([playerCharacter, creature]);
     });
+
+    test("A companion is ranked by its own initiative modifier, not by phase, when modifiers differ", () => {
+      const companion = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "companion",
+        InitiativeModifier: 0
+      });
+      const monster = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        InitiativeModifier: 5
+      });
+
+      encounter.EncounterFlow.StartEncounter();
+
+      // SortByInitiative (used by StartEncounter) ranks by initiative
+      // modifier first - phase is only a tiebreak for equal modifiers, so a
+      // higher-modifier monster still outranks a lower-modifier companion.
+      // This is unlike SortByPhase (used by "Swap Phase Order"/"Group
+      // Monsters"), which always keeps the companion with the players.
+      expect(encounter.Combatants()).toEqual([monster, companion]);
+    });
+
+    test("A companion falls back to favoring the player side when initiative modifiers tie", () => {
+      const monster = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        InitiativeModifier: 0
+      });
+      const companion = addCombatantFromStatBlock(encounter, {
+        ...StatBlock.Default(),
+        Player: "companion",
+        InitiativeModifier: 0
+      });
+
+      encounter.EncounterFlow.StartEncounter();
+
+      expect(encounter.Combatants()).toEqual([companion, monster]);
+    });
   });
 
   test("ActiveCombatantOnTop shows player view combatants in shifted order", () => {
@@ -266,6 +304,180 @@ describe("Tags", () => {
     const playerView = encounter.GetPlayerView();
     const playerViewCombatant = playerView.Combatants[0];
     expect(playerViewCombatant.Tags).toEqual([]);
+  });
+});
+
+describe("MonstersActFirst", () => {
+  beforeEach(() => {
+    InitializeTestSettings();
+  });
+
+  test("Players sort before monsters by default, and can be swapped", () => {
+    const encounter = buildEncounter();
+    const monster = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Monster"
+    });
+    const player = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Player",
+      Player: "player"
+    });
+    monster.Initiative(10);
+    player.Initiative(10);
+
+    encounter.SortByInitiative();
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Player",
+      "Monster"
+    ]);
+
+    encounter.ToggleMonstersActFirst();
+
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Monster",
+      "Player"
+    ]);
+  });
+
+  test("Companions sort with players, not monsters", () => {
+    const encounter = buildEncounter();
+    const monster = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Monster"
+    });
+    const companion = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Companion",
+      Player: "companion"
+    });
+    const player = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Player",
+      Player: "player"
+    });
+
+    encounter.SortByPhase();
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Companion",
+      "Player",
+      "Monster"
+    ]);
+
+    encounter.ToggleMonstersActFirst();
+
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Monster",
+      "Companion",
+      "Player"
+    ]);
+  });
+
+  test("Swapping preserves manual order within a side, even with differing initiative modifiers", () => {
+    const encounter = buildEncounter();
+    const player = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Player",
+      Player: "player"
+    });
+    const slowMonster = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Slow Monster",
+      InitiativeModifier: 0
+    });
+    const fastMonster = addCombatantFromStatBlock(encounter, {
+      ...StatBlock.Default(),
+      Name: "Fast Monster",
+      InitiativeModifier: 5
+    });
+
+    // Added in this order: Player, Slow Monster, Fast Monster.
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Player",
+      "Slow Monster",
+      "Fast Monster"
+    ]);
+
+    encounter.ToggleMonstersActFirst();
+
+    // Monsters move above the player, but keep their existing relative
+    // order - Fast Monster does NOT jump ahead of Slow Monster despite its
+    // higher initiative modifier.
+    expect(encounter.Combatants().map(c => c.StatBlock().Name)).toEqual([
+      "Slow Monster",
+      "Fast Monster",
+      "Player"
+    ]);
+  });
+
+  test("Persists across save/load", () => {
+    const encounter = buildEncounter();
+    encounter.ToggleMonstersActFirst();
+    const encounterState = encounter.ObservableEncounterState();
+
+    const loadedEncounter = buildEncounter();
+    loadedEncounter.LoadEncounterState(encounterState, () => {}, null);
+
+    expect(loadedEncounter.MonstersActFirst()).toBe(true);
+  });
+});
+
+describe("Persistent companions", () => {
+  beforeEach(() => {
+    InitializeTestSettings();
+  });
+
+  test("A companion can only be added to an encounter once, same as a persistent player character", async () => {
+    const encounter = buildEncounter();
+    const persistentCompanion = PersistentCharacter.Initialize({
+      ...StatBlock.Default(),
+      Name: "Wolf",
+      Player: "companion"
+    });
+
+    const firstAdd = await encounter.AddCombatantFromPersistentCharacter(
+      persistentCompanion,
+      () => {},
+      false
+    );
+    const secondAdd = await encounter.AddCombatantFromPersistentCharacter(
+      persistentCompanion,
+      () => {},
+      false
+    );
+
+    expect(firstAdd).not.toBeNull();
+    expect(secondAdd).toBeNull();
+    expect(encounter.Combatants().length).toBe(1);
+  });
+
+  test("A companion's current HP and Wounds sync to its PersistentCharacter, same as a player character", async () => {
+    const encounter = buildEncounter();
+    const persistentCompanion = PersistentCharacter.Initialize({
+      ...StatBlock.Default(),
+      Name: "Wolf",
+      Player: "companion",
+      Wounds: { Value: 5, Notes: "" }
+    });
+    const updatePersistentCharacter = jest.fn(async () => null);
+
+    const companion = await encounter.AddCombatantFromPersistentCharacter(
+      persistentCompanion,
+      updatePersistentCharacter,
+      false
+    );
+
+    companion.CurrentHP(3);
+    expect(updatePersistentCharacter).toHaveBeenCalledWith(
+      persistentCompanion.Id,
+      { CurrentHP: 3 }
+    );
+
+    companion.ApplyWoundsChange(2);
+    expect(updatePersistentCharacter).toHaveBeenCalledWith(
+      persistentCompanion.Id,
+      { CurrentWounds: 2 }
+    );
   });
 });
 

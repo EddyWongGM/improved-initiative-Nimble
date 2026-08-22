@@ -68,7 +68,7 @@ export class StatBlockEditor extends React.Component<
 
     const header =
       {
-        combatant: "Edit Combatant Statblock",
+        combatant: "Edit Name Statblock",
         library: "Edit Library Statblock",
         persistentcharacter: "Edit Character Statblock"
       }[this.props.editorTarget] || "Edit StatBlock";
@@ -176,7 +176,18 @@ export class StatBlockEditor extends React.Component<
             <EnumToggle
               labelsByOption={{
                 "": "Non Player Character",
-                player: "Player Character"
+                player: "Player Character",
+                companion: "Companion"
+              }}
+              fieldName="Player"
+            />
+          )}
+          {(this.props.editorTarget == "library" ||
+            this.props.editorTarget == "combatant") && (
+            <EnumToggle
+              labelsByOption={{
+                "": "Monster/NPC",
+                companion: "Companion"
               }}
               fieldName="Player"
             />
@@ -192,6 +203,13 @@ export class StatBlockEditor extends React.Component<
           <ValueAndNotesField label="Hit Points" fieldName="HP" />
           <ValueAndNotesField label="Defense" fieldName="AC" />
           <ValueAndNotesField label="Mana" fieldName="Mana" />
+          <ValueAndNotesField label="Resources" fieldName="Resources" />
+          {this.props.statBlock.Player == "player" && (
+            <ValueAndNotesField label="Hit Dice" fieldName="HitDice" />
+          )}
+          {StatBlock.ActsInPlayerPhase(this.props.statBlock) && (
+            <ValueAndNotesField label="Wounds" fieldName="Wounds" />
+          )}
           <InitiativeField />
         </div>
         <div className="c-statblock-editor__abilityscores">

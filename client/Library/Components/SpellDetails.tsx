@@ -83,8 +83,8 @@ function getSpellType(spell: Spell) {
   }
   const numberSuffix = numberSuffixes[spell.School];
   if (numberSuffix) {
-    return `${numberSuffix}-level ${spell.School}${ritual}`;
+    return `${numberSuffix}-tier ${spell.School}${ritual}`;
   }
 
-  return `Level ${spell.Level} ${spell.School}${ritual}`;
+  return `Tier ${spell.Level} ${spell.School}${ritual}`;
 }

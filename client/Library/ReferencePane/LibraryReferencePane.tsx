@@ -169,7 +169,7 @@ export class LibraryReferencePane<T extends Listable> extends React.Component<
             <li>
               <ListingButton
                 buttonClass="add"
-                text={"Quick Add a Combatant without a Statblock"}
+                text={"Quick Add a Name without a Statblock"}
                 faClass="bolt"
                 onClick={this.props.launchQuickAddPrompt}
               />

@@ -68,6 +68,71 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
     [tracker]
   );
 
+  const applyResourcesToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.SpendResourcesTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
+  const applyHitDiceToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.SpendHitDiceTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
+  const applyWoundsToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.SpendWoundsTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
+  const applyGoldToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.AddGoldTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
+  const addItemToCombatant = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+
+      if (combatantViewModel !== undefined) {
+        tracker.CombatantCommander.AddItemTargeted(combatantViewModel);
+      }
+    },
+    [tracker]
+  );
+
   const moveCombatantFromDrag = useCallback(
     (draggedCombatantId: string, droppedOntoCombatantId: string | null) => {
       const combatants = tracker.Encounter.Combatants();
@@ -104,6 +169,20 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
     [tracker]
   );
 
+  const toggleCombatantHasTakenTurn = useCallback(
+    (combatantId: string) => {
+      const combatantViewModel = tracker
+        .CombatantViewModels()
+        .find(c => c.Combatant.Id == combatantId);
+      combatantViewModel.ToggleHasTakenTurn();
+    },
+    [tracker]
+  );
+
+  const resetHasTakenTurnForAllCombatants = useCallback(() => {
+    tracker.Encounter.Combatants().forEach(c => c.HasTakenTurn(false));
+  }, [tracker]);
+
   const combatantsPendingRemove = useSubscription(
     tracker.Encounter.CombatantsPendingRemove
   );
@@ -115,10 +194,17 @@ export function InitiativeListHost(props: { tracker: TrackerViewModel }) {
         RemoveTagFromCombatant: removeCombatantTag,
         ApplyDamageToCombatant: applyDamageToCombatant,
         ApplyManaToCombatant: applyManaToCombatant,
+        ApplyResourcesToCombatant: applyResourcesToCombatant,
+        ApplyHitDiceToCombatant: applyHitDiceToCombatant,
+        ApplyWoundsToCombatant: applyWoundsToCombatant,
+        ApplyGoldToCombatant: applyGoldToCombatant,
+        AddItemToCombatant: addItemToCombatant,
         CombatantCommands: tracker.CombatantCommander.Commands,
         MoveCombatantFromDrag: moveCombatantFromDrag,
         SetCombatantColor: setCombatantColor,
         ToggleCombatantSpentReaction: toggleCombatantSpentReaction,
+        ToggleCombatantHasTakenTurn: toggleCombatantHasTakenTurn,
+        ResetHasTakenTurnForAllCombatants: resetHasTakenTurnForAllCombatants,
         CombatantsPendingRemove: combatantsPendingRemove,
         RestoreCombatants: tracker.CombatantCommander.RestoreCombatants,
         FlushCombatants:

@@ -26,13 +26,13 @@ export class StylesChooser extends React.Component<
       <div className="c-styles-chooser-colors">
         <div className="c-styles-chooser-slot-chooser">
           <h4>Colors</h4>
-          {this.getLabelAndColorBlock("Combatant Text", "combatantText")}
+          {this.getLabelAndColorBlock("Name Text", "combatantText")}
           {this.getLabelAndColorBlock(
-            "Combatant Background",
+            "Name Background",
             "combatantBackground"
           )}
           {this.getLabelAndColorBlock(
-            "Active Combatant Indicator",
+            "Active Name Indicator",
             "activeCombatantIndicator"
           )}
           {this.getLabelAndColorBlock("Header Text", "headerText")}

@@ -1,12 +1,13 @@
 import * as ko from "knockout";
-import { find, max, sortBy } from "lodash";
+import { find, max, partition, sortBy } from "lodash";
 import * as React from "react";
 import * as Sentry from "@sentry/browser";
 
 import * as _ from "lodash";
 
 import { CombatStats } from "../../common/CombatStats";
-import { CombatantState } from "../../common/CombatantState";
+import { CombatantState, InventoryItem } from "../../common/CombatantState";
+import { InventoryDisplayPayload } from "../../common/InventoryDisplay";
 import {
   EncounterSaveDefaults,
   EncounterState
@@ -44,6 +45,13 @@ export class Encounter {
   );
 
   private lastVisibleActiveCombatantId: string | null = null;
+
+  public MonstersActFirst = ko.observable<boolean>(false);
+
+  public ToggleMonstersActFirst = () => {
+    this.MonstersActFirst(!this.MonstersActFirst());
+    this.SortByPhase();
+  };
 
   constructor(
     private playerViewClient: PlayerViewClient,
@@ -101,11 +109,12 @@ export class Encounter {
     if (stable) {
       return [c => -c.Initiative()];
     } else {
+      const monstersActFirst = this.MonstersActFirst();
       return [
         c => -c.Initiative(),
         c => -this.getGroupBonusForCombatant(c),
         c => -c.InitiativeBonus(),
-        c => (c.IsPlayerCharacter() ? 0 : 1),
+        c => (c.ActsInPlayerPhase() !== monstersActFirst ? 0 : 1),
         c => c.InitiativeGroup(),
         c => c.StatBlock().Name,
         c => c.IndexLabel()
@@ -119,6 +128,22 @@ export class Encounter {
       this.getCombatantSortIteratees(stable)
     );
     this.combatants(sortedCombatants);
+  };
+
+  /**
+   * Splits combatants into a player block and a monster block, in whichever
+   * order MonstersActFirst dictates, WITHOUT re-ranking within each block -
+   * Nimble has no cross-creature initiative, so "which side goes first" is a
+   * pure DM override and everyone's existing relative order (manual/drag
+   * order) is preserved within their side.
+   */
+  public SortByPhase = () => {
+    const monstersActFirst = this.MonstersActFirst();
+    const [firstPhase, secondPhase] = partition(
+      this.combatants(),
+      c => c.ActsInPlayerPhase() !== monstersActFirst
+    );
+    this.combatants([...firstPhase, ...secondPhase]);
   };
 
   public ImportEncounter = encounter => {
@@ -204,6 +229,9 @@ export class Encounter {
         TemporaryHP: 0,
         Hidden: hideOnAdd,
         RevealedAC: false,
+        RevealedGold: false,
+        RevealedItems: false,
+        RevealedHitDice: true,
         Initiative: 0,
         Tags: [],
         RoundCounter: 0,
@@ -244,12 +272,20 @@ export class Encounter {
       IndexLabel: null,
       CurrentHP: persistentCharacter.CurrentHP,
       CurrentMana: persistentCharacter.CurrentMana,
+      CurrentResources: persistentCharacter.CurrentResources,
+      CurrentHitDice: persistentCharacter.CurrentHitDice,
+      CurrentWounds: persistentCharacter.CurrentWounds,
+      CurrentGold: persistentCharacter.CurrentGold,
       CurrentNotes: persistentCharacter.Notes,
       TemporaryHP: 0,
       Hidden: hideOnAdd,
       RevealedAC: false,
+      RevealedGold: false,
+      RevealedItems: false,
+      RevealedHitDice: true,
       Initiative: initiativeValue,
-      Tags: [],
+      Tags: persistentCharacter.Tags ?? [],
+      Items: persistentCharacter.Items ?? [],
       RoundCounter: 0,
       ElapsedSeconds: 0,
       InterfaceVersion: persistentCharacter.Version
@@ -389,7 +425,8 @@ export class Encounter {
           .filter(c => !c.IsPendingRemoval())
           .map<CombatantState>(c => c.GetState()),
         BackgroundImageUrl: this.TemporaryBackgroundImageUrl(),
-        SaveEncounterDefaults: this.SaveEncounterDefaults()
+        SaveEncounterDefaults: this.SaveEncounterDefaults(),
+        MonstersActFirst: this.MonstersActFirst()
       };
     }
   );
@@ -428,6 +465,8 @@ export class Encounter {
     updatePersistentCharacter: UpdatePersistentCharacter,
     persistentCharacterLibrary: Library<PersistentCharacter>
   ) => {
+    this.MonstersActFirst(encounterState.MonstersActFirst ?? false);
+
     const combatantsInLabelOrder = _.sortBy(
       encounterState.Combatants,
       c => c.IndexLabel
@@ -450,6 +489,14 @@ export class Encounter {
         combatant.CurrentMana(
           persistentCharacter.CurrentMana ?? combatant.MaxMana() ?? 0
         );
+        combatant.CurrentResources(
+          persistentCharacter.CurrentResources ?? combatant.MaxResources() ?? 0
+        );
+        combatant.CurrentHitDice(
+          persistentCharacter.CurrentHitDice ?? combatant.MaxHitDice() ?? 0
+        );
+        combatant.CurrentWounds(persistentCharacter.CurrentWounds ?? 0);
+        combatant.CurrentGold(persistentCharacter.CurrentGold ?? 0);
         combatant.CurrentNotes(persistentCharacter.Notes);
         combatant.AttachToPersistentCharacterLibrary(updatePersistentCharacter);
       }
@@ -546,5 +593,17 @@ export class Encounter {
 
   public DisplayPlayerViewCombatStats(stats: CombatStats) {
     this.playerViewClient.DisplayCombatStats(env.EncounterId, stats);
+  }
+
+  public DisplayPlayerViewInventory(
+    combatantName: string,
+    items: InventoryItem[]
+  ) {
+    const inventory: InventoryDisplayPayload = { combatantName, items };
+    this.playerViewClient.DisplayInventory(env.EncounterId, inventory);
+  }
+
+  public HidePlayerViewInventory() {
+    this.playerViewClient.DisplayInventory(env.EncounterId, null);
   }
 }

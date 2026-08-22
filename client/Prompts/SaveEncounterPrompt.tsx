@@ -59,7 +59,7 @@ const renderAdvanced = (autocompletePaths: string[]) => {
         />
       </label>
       <div className="p-save-encounter__include-combatants">
-        <div className="p-save-encounter__label">Include Combatants</div>
+        <div className="p-save-encounter__label">Include Names</div>
         <div className="p-save-encounter__character-combatants">
           <Field name="CharacterCombatants">
             {renderCombatantInclusionRow}

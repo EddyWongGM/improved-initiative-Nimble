@@ -19,6 +19,13 @@ export class CombatantViewModel {
   public HPPercentage: ko.PureComputed<string>;
   public Mana: ko.PureComputed<string>;
   public ManaPercentage: ko.PureComputed<string>;
+  public Resources: ko.PureComputed<string>;
+  public ResourcesPercentage: ko.PureComputed<string>;
+  public HitDice: ko.PureComputed<string>;
+  public HitDicePercentage: ko.PureComputed<string>;
+  public Wounds: ko.PureComputed<string>;
+  public WoundsPercentage: ko.PureComputed<string>;
+  public Gold: ko.PureComputed<string>;
   public Name: ko.PureComputed<string>;
 
   constructor(
@@ -56,6 +63,62 @@ export class CombatantViewModel {
       return (
         Math.floor((this.Combatant.CurrentMana() / maxMana) * 100) + "%"
       );
+    });
+    this.Resources = ko.pureComputed(() => {
+      const maxResources = this.Combatant.MaxResources();
+      if (maxResources === undefined) {
+        return null;
+      }
+      return `${this.Combatant.CurrentResources()}/${maxResources}`;
+    });
+    this.ResourcesPercentage = ko.pureComputed(() => {
+      const maxResources = this.Combatant.MaxResources();
+      if (!maxResources) {
+        return "0%";
+      }
+      return (
+        Math.floor(
+          (this.Combatant.CurrentResources() / maxResources) * 100
+        ) + "%"
+      );
+    });
+    this.HitDice = ko.pureComputed(() => {
+      const maxHitDice = this.Combatant.MaxHitDice();
+      if (maxHitDice === undefined) {
+        return null;
+      }
+      return `${this.Combatant.CurrentHitDice()}/${maxHitDice}`;
+    });
+    this.HitDicePercentage = ko.pureComputed(() => {
+      const maxHitDice = this.Combatant.MaxHitDice();
+      if (!maxHitDice) {
+        return "0%";
+      }
+      return (
+        Math.floor((this.Combatant.CurrentHitDice() / maxHitDice) * 100) + "%"
+      );
+    });
+    this.Wounds = ko.pureComputed(() => {
+      const maxWounds = this.Combatant.MaxWounds();
+      if (maxWounds === undefined) {
+        return null;
+      }
+      return `${this.Combatant.CurrentWounds()}/${maxWounds}`;
+    });
+    this.WoundsPercentage = ko.pureComputed(() => {
+      const maxWounds = this.Combatant.MaxWounds();
+      if (!maxWounds) {
+        return "0%";
+      }
+      return (
+        Math.floor((this.Combatant.CurrentWounds() / maxWounds) * 100) + "%"
+      );
+    });
+    this.Gold = ko.pureComputed(() => {
+      if (!this.Combatant.IsPlayerCharacter()) {
+        return null;
+      }
+      return `${this.Combatant.CurrentGold()}`;
     });
     this.Name = Combatant.DisplayName;
     setTimeout(() => animatedCombatantIds.push(this.Combatant.Id), 500);
@@ -96,12 +159,80 @@ export class CombatantViewModel {
     this.Combatant.ApplyManaChange(amount);
   }
 
+  public ApplyResourcesChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyResourcesChange(amount);
+  }
+
+  public ApplyHitDiceChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyHitDiceChange(amount);
+  }
+
+  public ApplyWoundsChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyWoundsChange(amount);
+  }
+
+  public ApplyGoldChange(inputAmount: string) {
+    const amount = parseInt(inputAmount);
+    if (isNaN(amount)) {
+      return;
+    }
+
+    this.Combatant.ApplyGoldChange(amount);
+  }
+
   public ApplyTemporaryHP(newTemporaryHP: number) {
     if (isNaN(newTemporaryHP)) {
       return;
     }
 
     this.Combatant.ApplyTemporaryHP(newTemporaryHP);
+  }
+
+  public ApplyTemporaryMana(newTemporaryMana: number) {
+    if (isNaN(newTemporaryMana)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryMana(newTemporaryMana);
+  }
+
+  public ApplyTemporaryResources(newTemporaryResources: number) {
+    if (isNaN(newTemporaryResources)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryResources(newTemporaryResources);
+  }
+
+  public ApplyTemporaryHitDice(newTemporaryHitDice: number) {
+    if (isNaN(newTemporaryHitDice)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryHitDice(newTemporaryHitDice);
+  }
+
+  public ApplyTemporaryWounds(newTemporaryWounds: number) {
+    if (isNaN(newTemporaryWounds)) {
+      return;
+    }
+
+    this.Combatant.ApplyTemporaryWounds(newTemporaryWounds);
   }
 
   public ApplyInitiative(initiative: number) {
@@ -157,6 +288,10 @@ export class CombatantViewModel {
     }
   }
 
+  public ToggleHasTakenTurn(): void {
+    this.Combatant.HasTakenTurn(!this.Combatant.HasTakenTurn());
+  }
+
   public ToggleHidden() {
     if (this.Combatant.Hidden()) {
       this.Combatant.Hidden(false);
@@ -173,6 +308,24 @@ export class CombatantViewModel {
     }
   }
 
+  public ToggleKeepHidden() {
+    if (this.Combatant.KeepHidden()) {
+      this.Combatant.KeepHidden(false);
+      this.LogEvent(`${this.Name()} no longer locked hidden.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantKeepHiddenUnlocked, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.KeepHidden(true);
+      this.LogEvent(
+        `${this.Name()} locked hidden - "Reveal All Monsters" won't reveal them.`
+      );
+      Metrics.TrackEvent(Metrics.Event.CombatantKeepHiddenLocked, {
+        name: this.Name()
+      });
+    }
+  }
+
   public ToggleRevealedAC() {
     if (this.Combatant.RevealedAC()) {
       this.Combatant.RevealedAC(false);
@@ -184,6 +337,54 @@ export class CombatantViewModel {
       this.Combatant.RevealedAC(true);
       this.LogEvent(`${this.Name()} AC revealed in player view.`);
       Metrics.TrackEvent(Metrics.Event.CombatantAcRevealed, {
+        name: this.Name()
+      });
+    }
+  }
+
+  public ToggleRevealedGold() {
+    if (this.Combatant.RevealedGold()) {
+      this.Combatant.RevealedGold(false);
+      this.LogEvent(`${this.Name()} gold hidden in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantGoldHidden, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.RevealedGold(true);
+      this.LogEvent(`${this.Name()} gold revealed in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantGoldRevealed, {
+        name: this.Name()
+      });
+    }
+  }
+
+  public ToggleRevealedItems() {
+    if (this.Combatant.RevealedItems()) {
+      this.Combatant.RevealedItems(false);
+      this.LogEvent(`${this.Name()} inventory hidden in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantItemsHidden, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.RevealedItems(true);
+      this.LogEvent(`${this.Name()} inventory revealed in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantItemsRevealed, {
+        name: this.Name()
+      });
+    }
+  }
+
+  public ToggleRevealedHitDice() {
+    if (this.Combatant.RevealedHitDice()) {
+      this.Combatant.RevealedHitDice(false);
+      this.LogEvent(`${this.Name()} Hit Dice hidden in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantHitDiceHidden, {
+        name: this.Name()
+      });
+    } else {
+      this.Combatant.RevealedHitDice(true);
+      this.LogEvent(`${this.Name()} Hit Dice revealed in player view.`);
+      Metrics.TrackEvent(Metrics.Event.CombatantHitDiceRevealed, {
         name: this.Name()
       });
     }

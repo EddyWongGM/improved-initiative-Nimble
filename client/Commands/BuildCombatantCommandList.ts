@@ -28,7 +28,7 @@ export const BuildCombatantCommandList: (
     id: "spend-mana",
     description: "Spend Mana",
     actionBinding: c.SpendMana,
-    fontAwesomeIcon: "hat-wizard",
+    fontAwesomeIcon: "tint",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -36,6 +36,90 @@ export const BuildCombatantCommandList: (
     description: "Restore Mana",
     actionBinding: c.RestoreMana,
     fontAwesomeIcon: "star",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-mana",
+    description: "Apply Temporary Mana",
+    actionBinding: c.AddTemporaryMana,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "spend-resources",
+    description: "Spend Resources",
+    actionBinding: c.SpendResources,
+    fontAwesomeIcon: "bolt",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-resources",
+    description: "Restore Resources",
+    actionBinding: c.RestoreResources,
+    fontAwesomeIcon: "redo",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-resources",
+    description: "Apply Temporary Resources",
+    actionBinding: c.AddTemporaryResources,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "spend-hit-dice",
+    description: "Spend Hit Die",
+    actionBinding: c.SpendHitDice,
+    fontAwesomeIcon: "dice-d6",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-hit-dice",
+    description: "Restore Hit Die",
+    actionBinding: c.RestoreHitDice,
+    fontAwesomeIcon: "bed",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-hit-dice",
+    description: "Apply Temporary Hit Dice",
+    actionBinding: c.AddTemporaryHitDice,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "spend-wounds",
+    description: "Add Wounds",
+    actionBinding: c.SpendWounds,
+    fontAwesomeIcon: "skull-crossbones",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "restore-wounds",
+    description: "Heal Wounds",
+    actionBinding: c.RestoreWounds,
+    fontAwesomeIcon: "band-aid",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "apply-temporary-wounds",
+    description: "Apply Wound Protection",
+    actionBinding: c.AddTemporaryWounds,
+    fontAwesomeIcon: "medkit",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "add-gold",
+    description: "Add Gold",
+    actionBinding: c.AddGold,
+    fontAwesomeIcon: "hand-holding-usd",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "subtract-gold",
+    description: "Subtract Gold",
+    actionBinding: c.SubtractGold,
+    fontAwesomeIcon: "coins",
     defaultShowOnActionBar: false
   }),
   new Command({
@@ -81,11 +165,55 @@ export const BuildCombatantCommandList: (
     defaultShowInCombatantRow: true
   }),
   new Command({
+    id: "toggle-keep-hidden",
+    description: "Lock Hidden (ignore Reveal All Monsters)",
+    actionBinding: c.ToggleKeepHidden,
+    fontAwesomeIcon: "lock",
+    defaultShowOnActionBar: false,
+    defaultShowInCombatantRow: true
+  }),
+  new Command({
     id: "toggle-reveal-ac",
     description: "Reveal/Hide AC in Player View",
     actionBinding: c.ToggleRevealedAC,
     fontAwesomeIcon: "shield-alt",
     defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "toggle-reveal-hit-dice",
+    description: "Hide/Reveal Hit Dice in Player View",
+    actionBinding: c.ToggleRevealedHitDice,
+    fontAwesomeIcon: "dice-d6",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "show-inventory",
+    description: "Show/Hide Inventory in Player View Popup",
+    actionBinding: () => c.ToggleInventoryDisplayToPlayers(),
+    fontAwesomeIcon: "gem",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "toggle-reveal-gold",
+    description: "Hide/Reveal Gold in Player View",
+    actionBinding: c.ToggleRevealedGold,
+    fontAwesomeIcon: "coins",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "toggle-reveal-items",
+    description: "Hide/Reveal Inventory in Player View",
+    actionBinding: c.ToggleRevealedItems,
+    fontAwesomeIcon: "box-open",
+    defaultShowOnActionBar: false
+  }),
+  new Command({
+    id: "add-item",
+    description: "Add Item",
+    actionBinding: c.AddItem,
+    fontAwesomeIcon: "box-open",
+    defaultShowOnActionBar: false,
+    defaultShowInCombatantRow: true
   }),
   new Command({
     id: "edit-statblock",

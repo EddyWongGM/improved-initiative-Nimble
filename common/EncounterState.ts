@@ -9,6 +9,7 @@ export interface EncounterState<T> {
   ElapsedSeconds?: number;
   BackgroundImageUrl?: string;
   SaveEncounterDefaults?: EncounterSaveDefaults | null;
+  MonstersActFirst?: boolean;
   Combatants: T[];
 }
 
@@ -19,6 +20,7 @@ export namespace EncounterState {
       RoundCounter: 0,
       ElapsedSeconds: 0,
       SaveEncounterDefaults: null,
+      MonstersActFirst: false,
       Combatants: []
     };
   }

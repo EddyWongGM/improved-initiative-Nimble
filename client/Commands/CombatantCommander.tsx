@@ -20,11 +20,24 @@ import { ApplyDamagePrompt } from "../Prompts/ApplyDamagePrompt";
 import { ApplyHealingPrompt } from "../Prompts/ApplyHealingPrompt";
 import { ApplyManaPrompt } from "../Prompts/ApplyManaPrompt";
 import { RestoreManaPrompt } from "../Prompts/RestoreManaPrompt";
+import { ApplyResourcesPrompt } from "../Prompts/ApplyResourcesPrompt";
+import { RestoreResourcesPrompt } from "../Prompts/RestoreResourcesPrompt";
+import { ApplyHitDicePrompt } from "../Prompts/ApplyHitDicePrompt";
+import { RestoreHitDicePrompt } from "../Prompts/RestoreHitDicePrompt";
+import { ApplyWoundsPrompt } from "../Prompts/ApplyWoundsPrompt";
+import { RestoreWoundsPrompt } from "../Prompts/RestoreWoundsPrompt";
+import { ApplyGoldPrompt } from "../Prompts/ApplyGoldPrompt";
+import { SubtractGoldPrompt } from "../Prompts/SubtractGoldPrompt";
 import { ConcentrationPrompt } from "../Prompts/ConcentrationPrompt";
 import { ShowDiceRollPrompt } from "../Prompts/RollDicePrompt";
 import { TagPrompt } from "../Prompts/TagPrompt";
+import { ItemPrompt } from "../Prompts/ItemPrompt";
 import { UpdateNotesPrompt } from "../Prompts/UpdateNotesPrompt";
 import { ApplyTemporaryHPPrompt } from "../Prompts/ApplyTemporaryHPPrompt";
+import { ApplyTemporaryManaPrompt } from "../Prompts/ApplyTemporaryManaPrompt";
+import { ApplyTemporaryResourcesPrompt } from "../Prompts/ApplyTemporaryResourcesPrompt";
+import { ApplyTemporaryHitDicePrompt } from "../Prompts/ApplyTemporaryHitDicePrompt";
+import { ApplyTemporaryWoundsPrompt } from "../Prompts/ApplyTemporaryWoundsPrompt";
 import { LinkInitiativePrompt } from "../Prompts/LinkInitiativePrompt";
 import { TextEnricherContext } from "../TextEnricher/TextEnricher";
 import { QuickEditStatBlockPrompt } from "../Prompts/QuickEditStatBlockPrompt";
@@ -37,6 +50,7 @@ interface PendingLinkInitiative {
 export class CombatantCommander {
   private selectedCombatantIds = ko.observableArray<string>([]);
   private latestRoll: RollResult;
+  public InventoryDisplayedCombatantId = ko.observable<string>(null);
 
   constructor(private tracker: TrackerViewModel) {
     this.Commands = BuildCombatantCommandList(this);
@@ -284,6 +298,258 @@ export class CombatantCommander {
     this.tracker.PromptQueue.Add(prompt);
   };
 
+  public AddTemporaryMana = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryManaPrompt(combatantNames, model => {
+      if (model.manaAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryMana(model.manaAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.manaAmount} temporary mana granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryManaAdded, {
+          amount: model.manaAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
+  private applyResourcesForCombatants(
+    combatantViewModels: CombatantViewModel[]
+  ) {
+    const prompt = ApplyResourcesPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogResourcesChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyResourcesForCombatants(selectedCombatants);
+  };
+
+  public SpendResourcesTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyResourcesForCombatants([combatantViewModel]);
+  };
+
+  public RestoreResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreResourcesPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogResourcesChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
+  public AddTemporaryResources = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryResourcesPrompt(combatantNames, model => {
+      if (model.resourcesAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryResources(model.resourcesAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.resourcesAmount} temporary resources granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryResourcesAdded, {
+          amount: model.resourcesAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
+  private applyHitDiceForCombatants(
+    combatantViewModels: CombatantViewModel[]
+  ) {
+    const prompt = ApplyHitDicePrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogHitDiceChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyHitDiceForCombatants(selectedCombatants);
+  };
+
+  public SpendHitDiceTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyHitDiceForCombatants([combatantViewModel]);
+  };
+
+  public RestoreHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreHitDicePrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogHitDiceChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
+  public AddTemporaryHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryHitDicePrompt(combatantNames, model => {
+      if (model.hitDiceAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryHitDice(model.hitDiceAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.hitDiceAmount} temporary hit dice granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryHitDiceAdded, {
+          amount: model.hitDiceAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
+  private applyWoundsForCombatants(combatantViewModels: CombatantViewModel[]) {
+    const prompt = ApplyWoundsPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogWoundsChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public SpendWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyWoundsForCombatants(selectedCombatants);
+  };
+
+  public SpendWoundsTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyWoundsForCombatants([combatantViewModel]);
+  };
+
+  public RestoreWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = RestoreWoundsPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogWoundsChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
+  public AddTemporaryWounds = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    const combatantNames = selectedCombatants.map(c => c.Name()).join(", ");
+    const prompt = ApplyTemporaryWoundsPrompt(combatantNames, model => {
+      if (model.woundsAmount) {
+        selectedCombatants.forEach(c =>
+          c.ApplyTemporaryWounds(model.woundsAmount)
+        );
+        this.tracker.EventLog.AddEvent(
+          `${model.woundsAmount} points of wound protection granted to ${combatantNames}.`
+        );
+        Metrics.TrackEvent(Metrics.Event.TemporaryWoundsAdded, {
+          amount: model.woundsAmount
+        });
+      }
+      return true;
+    });
+
+    this.tracker.PromptQueue.Add(prompt);
+
+    return false;
+  };
+
+  private applyGoldForCombatants(combatantViewModels: CombatantViewModel[]) {
+    const prompt = ApplyGoldPrompt(
+      combatantViewModels,
+      "",
+      this.tracker.EventLog.LogGoldChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  }
+
+  public AddGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    const selectedCombatants = this.SelectedCombatants();
+    this.applyGoldForCombatants(selectedCombatants);
+  };
+
+  public AddGoldTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.applyGoldForCombatants([combatantViewModel]);
+  };
+
+  public SubtractGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+    const selectedCombatants = this.SelectedCombatants();
+    const prompt = SubtractGoldPrompt(
+      selectedCombatants,
+      "",
+      this.tracker.EventLog.LogGoldChange
+    );
+    this.tracker.PromptQueue.Add(prompt);
+  };
+
   public UpdateNotes = async () => {
     if (!this.HasOneSelected()) {
       return;
@@ -390,6 +656,63 @@ export class CombatantCommander {
     return false;
   };
 
+  public AddItem = (combatantVM?: CombatantViewModel) => {
+    let targetCombatants: Combatant[] = [];
+
+    if (combatantVM instanceof CombatantViewModel) {
+      targetCombatants = [combatantVM.Combatant];
+    } else {
+      targetCombatants = this.SelectedCombatants().map(c => c.Combatant);
+    }
+
+    if (targetCombatants.length == 0) {
+      return;
+    }
+
+    const prompt = ItemPrompt(targetCombatants, this.tracker.EventLog.AddEvent);
+    this.tracker.PromptQueue.Add(prompt);
+    return false;
+  };
+
+  public AddItemTargeted = (combatantViewModel: CombatantViewModel) => {
+    this.AddItem(combatantViewModel);
+  };
+
+  public ToggleInventoryDisplayToPlayers = (
+    combatantVM?: CombatantViewModel
+  ) => {
+    const targetCombatantVM =
+      combatantVM instanceof CombatantViewModel
+        ? combatantVM
+        : this.HasOneSelected()
+          ? this.SelectedCombatants()[0]
+          : null;
+
+    if (!targetCombatantVM) {
+      return false;
+    }
+
+    const combatant = targetCombatantVM.Combatant;
+
+    if (this.InventoryDisplayedCombatantId() === combatant.Id) {
+      this.tracker.Encounter.HidePlayerViewInventory();
+      this.InventoryDisplayedCombatantId(null);
+      this.tracker.EventLog.AddEvent(
+        `${combatant.DisplayName()}'s inventory hidden in Player View.`
+      );
+    } else {
+      this.tracker.Encounter.DisplayPlayerViewInventory(
+        combatant.DisplayName(),
+        combatant.Items()
+      );
+      this.InventoryDisplayedCombatantId(combatant.Id);
+      this.tracker.EventLog.AddEvent(
+        `${combatant.DisplayName()}'s inventory shown in Player View.`
+      );
+    }
+    return false;
+  };
+
   public EditInitiative = () => {
     this.SelectedCombatants().forEach(c => c.EditInitiative());
     return false;
@@ -397,7 +720,10 @@ export class CombatantCommander {
 
   private pendingLinkInitiative = ko.observable<PendingLinkInitiative>(null);
 
-  private linkCombatantInitiatives = (combatants: CombatantViewModel[]) => {
+  private linkCombatantInitiatives = (
+    combatants: CombatantViewModel[],
+    resort = true
+  ) => {
     this.pendingLinkInitiative(null);
     const highestInitiative = combatants
       .map(c => c.Combatant.Initiative())
@@ -410,8 +736,22 @@ export class CombatantCommander {
     });
     this.tracker.Encounter.CleanInitiativeGroups();
 
-    this.tracker.Encounter.SortByInitiative();
+    if (resort) {
+      this.tracker.Encounter.SortByInitiative();
+    }
     Metrics.TrackEvent(Metrics.Event.InitiativeLinked);
+  };
+
+  public GroupCombatants = (combatants: CombatantViewModel[]) => {
+    if (combatants.length < 2) {
+      return;
+    }
+
+    // Skip the usual Dex-bonus-ranked resort - grouping combatants together
+    // (e.g. "Group Monsters") should preserve their existing manual/drag
+    // order, only clustering them into a contiguous phase block.
+    this.linkCombatantInitiatives(combatants, false);
+    this.tracker.Encounter.SortByPhase();
   };
 
   public LinkInitiative = () => {
@@ -494,12 +834,44 @@ export class CombatantCommander {
     this.SelectedCombatants().forEach(c => c.ToggleHidden());
   };
 
+  public ToggleKeepHidden = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleKeepHidden());
+  };
+
   public ToggleRevealedAC = () => {
     if (!this.HasSelected()) {
       return;
     }
 
     this.SelectedCombatants().forEach(c => c.ToggleRevealedAC());
+  };
+
+  public ToggleRevealedGold = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedGold());
+  };
+
+  public ToggleRevealedItems = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedItems());
+  };
+
+  public ToggleRevealedHitDice = () => {
+    if (!this.HasSelected()) {
+      return;
+    }
+
+    this.SelectedCombatants().forEach(c => c.ToggleRevealedHitDice());
   };
 
   public EditOwnStatBlock = () => {

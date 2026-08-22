@@ -23,7 +23,7 @@ export function QuickEditStatBlockPrompt(
     children: (
       <StandardPromptLayout
         className="p-quick-add"
-        label="Quick Edit Combatant"
+        label="Quick Edit Name"
       >
         Name <Field name="Name" type="text" autoComplete="off" />
         Max HP <Field name="MaxHP" type="number" />

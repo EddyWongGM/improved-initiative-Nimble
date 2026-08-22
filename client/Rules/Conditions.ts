@@ -88,267 +88,45 @@ export const Conditions2014 = {
 
 export const Conditions2025 = {
   Blinded: `<p>
-  While you have the Blinded condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Can’t See.</strong> You can’t see and automatically fail any ability
-    check that requires sight.
-  </li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage,
-    and your attack rolls have Disadvantage.
-  </li>
-</ul>`,
-  Charmed: `<p>
-  While you have the Charmed condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Can’t Harm the Charmer.</strong> You can’t attack the charmer or
-    target the charmer with damaging abilities or magical effects.
-  </li>
-  <li>
-    <strong>Social Advantage.</strong> The charmer has Advantage on any ability
-    check to interact with you socially.
-  </li>
-</ul>`,
+  Can’t see. Attacks against you have advantage, and your attacks have disadvantage.
+</p>`,
   Concentrating: `<p>
-  Some spells and other effects require Concentration to remain active, as
-  specified in their descriptions. If the effect’s creator loses Concentration,
-  the effect ends. If the effect has a maximum duration, the effect’s
-  description specifies how long the creator can concentrate on it: up to 1
-  minute, 1 hour, or some other duration. The creator can end Concentration at
-  any time (no action required). The following factors break Concentration.
-</p>
-<ul>
-  <li>
-    <strong>Another Concentration Effect.</strong> You lose Concentration on an
-    effect the moment you start casting a spell that requires Concentration or
-    activate another effect that requires Concentration.
-  </li>
-  <li>
-    <strong>Damage.</strong> If you take damage, you must succeed on a
-    Constitution saving throw to maintain Concentration. The DC equals 10 or
-    half the damage taken (round down), whichever number is higher, up to a
-    maximum DC of 30.
-  </li>
-  <li>
-    <strong>Incapacitated or Dead.</strong> Your Concentration ends if you have
-    the Incapacitated condition or you die.
-  </li>
-</ul>`,
-  Deafened: `<p>
-  While you have the Deafened condition, you experience the following effect.
-</p>
-<ul>
-  <li>
-    <strong>Can’t Hear.</strong> You can’t hear and automatically fail any
-    ability check that requires hearing.
-  </li>
-</ul>`,
+  Whenever a character is <b>Crit</b> while concentrating, they must make a <b>DC 10 STR save</b> or Concentration is broken and the activity fails. Concentration is automatically broken whenever a character drops to 0 HP or is Incapacitated.
+</p>`,
+  Dazed: `<p>
+  Heroes: lose 1 action; monsters: can perform one less action on their next turn.
+</p>`,
+  Dying: `<p>
+  At 0 HP. Max 1 action. Taking damage while Dying causes 2 Wounds, a crit causes 3 instead.
+</p>`,
   Frightened: `<p>
-  While you have the Frightened condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Ability Checks and Attacks Affected.</strong> You have Disadvantage
-    on ability checks and attack rolls while the source of fear is within line
-    of sight.
-  </li>
-  <li>
-    <strong>Can’t Approach.</strong> You can’t willingly move closer to the
-    source of fear.
-  </li>
-</ul>`,
+  Disadvantage on rolls when source of fear is near; Speed halved when moving closer to it.
+</p>`,
   Grappled: `<p>
-  While you have the Grappled condition, you experience the following effects.
-</p>
-<ul>
-  <li><strong>Speed 0.</strong> Your Speed is 0 and can’t increase.</li>
-  <li>
-    <strong>Attacks Affected.</strong> You have Disadvantage on attack rolls
-    against any target other than the grappler.
-  </li>
-  <li>
-    <strong>Movable.</strong> The grappler can drag or carry you when it moves,
-    but every foot of movement costs it 1 extra foot unless you are Tiny or two
-    or more sizes smaller than it.
-  </li>
-</ul>`,
+  Cannot move. Attacks against you have advantage.
+</p>`,
+  Hampered: `<p>
+  Any creature with actions or movement reduced (e.g., Dazed, Grappled/Restrained, Prone, Slowed, in Difficult Terrain).
+</p>`,
   Incapacitated: `<p>
-  While you have the Incapacitated condition, you experience the following
-  effects.
-</p>
-<ul>
-  <li>
-    <strong>Inactive.</strong> You can’t take any action, Bonus Action, or
-    Reaction.
-  </li>
-  <li><strong>No Concentration.</strong> Your Concentration is broken.</li>
-  <li><strong>Speechless.</strong> You can’t speak.</li>
-  <li>
-    <strong>Surprised.</strong> If you’re Incapacitated when you roll
-    Initiative, you have Disadvantage on the roll.
-  </li>
-</ul>`,
+  Can’t do anything. Attacks against you have advantage, and melee attacks that hit, crit.
+</p>`,
   Invisible: `<p>
-  While you have the Invisible condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Surprise.</strong> If you’re Invisible when you roll Initiative, you
-    have Advantage on the roll.
-  </li>
-  <li>
-    <strong>Concealed.</strong> You aren’t affected by any effect that requires
-    its target to be seen unless the effect’s creator can somehow see you. Any
-    equipment you are wearing or carrying is also concealed.
-  </li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have
-    Disadvantage, and your attack rolls have Advantage. If a creature can
-    somehow see you, you don’t gain this benefit against that creature.
-  </li>
-</ul>`,
-  Paralyzed: `<p>
-  While you have the Paralyzed condition, you experience the following effects.
-</p>
-<ul>
-  <li><strong>Incapacitated.</strong> You have the Incapacitated condition.</li>
-  <li><strong>Speed 0.</strong> Your Speed is 0 and can’t increase.</li>
-  <li>
-    <strong>Saving Throws Affected.</strong> You automatically fail Strength and
-    Dexterity saving throws.
-  </li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage.
-  </li>
-  <li>
-    <strong>Automatic Critical Hits.</strong> Any attack roll that hits you is a
-    Critical Hit if the attacker is within 5 feet of you.
-  </li>
-</ul>`,
+  Cannot be seen. Your attacks have advantage, and attacks against you have disadvantage.
+</p>`,
   Petrified: `<p>
-  While you have the Petrified condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Turned to Inanimate Substance.</strong> You are transformed, along
-    with any nonmagical objects you are wearing and carrying, into a solid
-    inanimate substance (usually stone). Your weight increases by a factor of
-    ten, and you cease aging.
-  </li>
-  <li><strong>Incapacitated.</strong> You have the Incapacitated condition.</li>
-  <li><strong>Speed 0.</strong> Your Speed is 0 and can’t increase.</li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage.
-  </li>
-  <li>
-    <strong>Saving Throws Affected.</strong> You automatically fail Strength and
-    Dexterity saving throws.
-  </li>
-  <li><strong>Resist Damage.</strong> You have Resistance to all damage.</li>
-  <li>
-    <strong>Poison Immunity.</strong> You have Immunity to the Poisoned
-    condition.
-  </li>
-</ul>`,
+  Incapacitated with all the benefits and drawbacks of being a rock! Immune to most damage except from large explosions, picks, or similar tools..
+</p>`,
   Poisoned: `<p>
-  While you have the Poisoned condition, you experience the following effect.
-</p>
-<ul>
-  <li>
-    <strong>Ability Checks and Attacks Affected.</strong> You have Disadvantage
-    on attack rolls and ability checks.
-  </li>
-</ul>`,
-  Prone: `<p>While you have the Prone condition, you experience the following effects.</p>
-<ul>
-  <li>
-    <strong>Restricted Movement.</strong> Your only movement options are to
-    crawl or to spend an amount of movement equal to half your Speed (round
-    down) to right yourself and thereby end the condition. If your Speed is 0,
-    you can’t right yourself.
-  </li>
-  <li>
-    <strong>Attacks Affected.</strong> You have Disadvantage on attack rolls. An
-    attack roll against you has Advantage if the attacker is within 5 feet of
-    you. Otherwise, that attack roll has Disadvantage.
-  </li>
-</ul>`,
-  Restrained: `<p>
-  While you have the Restrained condition, you experience the following effects.
-</p>
-<ul>
-  <li><strong>Speed 0.</strong> Your Speed is 0 and can’t increase.</li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage,
-    and your attack rolls have Disadvantage.
-  </li>
-  <li>
-    <strong>Saving Throws Affected.</strong> You have Disadvantage on Dexterity
-    saving throws.
-  </li>
-</ul>`,
-  Stunned: `<p>
-  While you have the Stunned condition, you experience the following effects.
-</p>
-<ul>
-  <li><strong>Incapacitated.</strong> You have the Incapacitated condition.</li>
-  <li>
-    <strong>Saving Throws Affected.</strong> You automatically fail Strength and
-    Dexterity saving throws.
-  </li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage.
-  </li>
-</ul>`,
-  Unconscious: `<p>
-  While you have the Unconscious condition, you experience the following
-  effects.
-</p>
-<ul>
-  <li>
-    <strong>Inert.</strong> You have the Incapacitated and Prone conditions, and
-    you drop whatever you’re holding. When this condition ends, you remain
-    Prone.
-  </li>
-  <li><strong>Speed 0.</strong> Your Speed is 0 and can’t increase.</li>
-  <li>
-    <strong>Attacks Affected.</strong> Attack rolls against you have Advantage.
-  </li>
-  <li>
-    <strong>Saving Throws Affected.</strong> You automatically fail Strength and
-    Dexterity saving throws.
-  </li>
-  <li>
-    <strong>Automatic Critical Hits.</strong> Any attack roll that hits you is a
-    Critical Hit if the attacker is within 5 feet of you.
-  </li>
-  <li><strong>Unaware.</strong> You’re unaware of your surroundings.</li>
-</ul>`,
-  Exhaustion: `<p>
-  While you have the Exhaustion condition, you experience the following effects.
-</p>
-<ul>
-  <li>
-    <strong>Exhaustion Levels.</strong> This condition is cumulative. Each time
-    you receive it, you gain 1 Exhaustion level. You die if your Exhaustion
-    level is 6.
-  </li>
-  <li>
-    <strong>D20 Tests Affected.</strong> When you make a D20 Test, the roll is
-    reduced by 2 times your Exhaustion level.
-  </li>
-  <li>
-    <strong>Speed Reduced.</strong> Your Speed is reduced by a number of feet
-    equal to 5 times your Exhaustion level.
-  </li>
-  <li>
-    <strong>Removing Exhaustion Levels.</strong> Finishing a Long Rest removes 1
-    of your Exhaustion levels. When your Exhaustion level reaches 0, the
-    condition ends.
-  </li>
-</ul>`
+  Disadvantage on rolls (typically, healing ends this condition).
+</p>`,
+  Prone: `<p>Movement costs twice as much, and disadvantage on attacks.</p>
+<p>Melee attacks against you have advantage; Ranged have disadvantage.<br /></p><p>Spend 3 spaces of your Speed to stand up.</p>`,
+  Restrained: `<p>Cannot move. Attacks against you have advantage.</p>`,
+  Riding: `<p>You move with the creature you are riding. Any attacks that miss you, strike them.</p>`,
+  Silenced: `<p>Cannot cast spells or use other abilities that require speaking (e.g. Commander’s Orders).</p>`,
+  Slowed: `<p>Speed halved during your next turn.</p>`,
+  Taunted: `<p>
+  Disadvantage on attacks except against the most recent taunter.
+</p>`
 };

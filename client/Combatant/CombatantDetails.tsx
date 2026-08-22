@@ -1,9 +1,12 @@
 import * as React from "react";
+import { useDrag, useDrop, DropTargetMonitor } from "react-dnd";
 
 import { StatBlockComponent } from "../Components/StatBlock";
 import { StatBlock } from "../../common/StatBlock";
+import { InventoryItem } from "../../common/CombatantState";
 import { StatBlockHeader } from "../Components/StatBlockHeader";
 import { TextEnricherContext } from "../TextEnricher/TextEnricher";
+import { Combatant } from "./Combatant";
 import { CombatantViewModel } from "./CombatantViewModel";
 import { useSubscription } from "./linkComponentToObservables";
 import { SettingsContext } from "../Settings/SettingsContext";
@@ -14,6 +17,10 @@ interface CombatantDetailsProps {
   combatantViewModel: CombatantViewModel;
   displayMode: "default" | "active" | "status-only";
   key: string;
+  isInventoryDisplayedToPlayers?: boolean;
+  onToggleInventoryDisplayToPlayers?: (
+    combatantViewModel: CombatantViewModel
+  ) => void;
 }
 
 export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
@@ -26,8 +33,27 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
   const currentManaPercentage = useSubscription(
     props.combatantViewModel.ManaPercentage
   );
+  const currentResources = useSubscription(props.combatantViewModel.Resources);
+  const currentResourcesPercentage = useSubscription(
+    props.combatantViewModel.ResourcesPercentage
+  );
+  const currentHitDice = useSubscription(props.combatantViewModel.HitDice);
+  const currentHitDicePercentage = useSubscription(
+    props.combatantViewModel.HitDicePercentage
+  );
+  const currentWounds = useSubscription(props.combatantViewModel.Wounds);
+  const currentWoundsPercentage = useSubscription(
+    props.combatantViewModel.WoundsPercentage
+  );
   const name = useSubscription(props.combatantViewModel.Name);
   const tags = useSubscription(props.combatantViewModel.Combatant.Tags);
+  const items = useSubscription(props.combatantViewModel.Combatant.Items);
+  const inventorySlotsUsed = useSubscription(
+    props.combatantViewModel.Combatant.InventorySlotsUsed
+  );
+  const maxInventorySlots = useSubscription(
+    props.combatantViewModel.Combatant.MaxInventorySlots
+  );
   const notes = useSubscription(
     props.combatantViewModel.Combatant.CurrentNotes
   );
@@ -94,6 +120,58 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
           </>
         )}
       </div>
+      {(currentResources || currentHitDice || currentWounds) && (
+        <div className="c-combatant-details__resources-wounds">
+          {currentResources && (
+            <>
+              <span className="stat-label Resources">Resources</span>
+              <span>
+                {currentResources}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentResourcesPercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+          {currentHitDice && (
+            <>
+              <span className="stat-label HitDice">Hit Dice</span>
+              <span>
+                {currentHitDice}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentHitDicePercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+          {currentWounds && (
+            <>
+              <span className="stat-label Wounds">Wounds</span>
+              <span>
+                {currentWounds}
+                {DisplayHPBar && (
+                  <span className="combatant__hp-bar">
+                    <span
+                      className="combatant__hp-bar--filled"
+                      style={renderHPBarStyle(currentWoundsPercentage)}
+                    />
+                  </span>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+      )}
       <div className="HP AC speed Challenge">
         <span className="stat-label">Defense</span>
         <span className="stat-value">{statBlock.AC.Value}</span>
@@ -125,20 +203,68 @@ export function CombatantDetails(props: CombatantDetailsProps): JSX.Element {
           </span>
         </div>
       )}
-      {props.displayMode !== "status-only" && (
-        <>
-          {StatBlock.IsPlayerCharacter(statBlock) && <hr />}
-          <StatBlockComponent
-            statBlock={statBlock}
-            displayMode={props.displayMode}
-            hideName
-            hideTopRow
-          />
-        </>
-      )}
-      {renderedNotes && (
-        <div className="c-combatant-details__notes">{renderedNotes}</div>
-      )}
+      <div className="c-combatant-details__scrollable">
+        {props.displayMode !== "status-only" && (
+          <>
+            {StatBlock.IsPlayerCharacter(statBlock) && <hr />}
+            <StatBlockComponent
+              statBlock={statBlock}
+              displayMode={props.displayMode}
+              hideName
+              hideTopRow
+            />
+          </>
+        )}
+        {renderedNotes && (
+          <div className="c-combatant-details__notes">{renderedNotes}</div>
+        )}
+        {items.length > 0 && (
+          <>
+            {props.displayMode === "status-only" && <hr />}
+            <div className="c-combatant-details__items">
+              <div className="c-combatant-details__items-header">
+                <span className="stat-label">Inventory</span>{" "}
+                <span className="stat-value">
+                  ({inventorySlotsUsed}/{maxInventorySlots} slots)
+                </span>
+                {props.onToggleInventoryDisplayToPlayers && (
+                  <span
+                    className={
+                      "c-combatant-details__items-toggle fas fa-gem fa-clickable" +
+                      (props.isInventoryDisplayedToPlayers
+                        ? " c-combatant-details__items-toggle--active"
+                        : "")
+                    }
+                    title={
+                      props.isInventoryDisplayedToPlayers
+                        ? "Hide Inventory in Player View"
+                        : "Show Inventory to Players"
+                    }
+                    onClick={() =>
+                      props.onToggleInventoryDisplayToPlayers(
+                        props.combatantViewModel
+                      )
+                    }
+                  />
+                )}
+              </div>
+              <ul className="c-combatant-details__item-list">
+                {items.map((item, index) => (
+                  <ItemDetails
+                    key={item.Name + index}
+                    item={item}
+                    index={index}
+                    combatant={props.combatantViewModel.Combatant}
+                    dragDropType={
+                      "combatant-item-" + props.combatantViewModel.Combatant.Id
+                    }
+                  />
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -159,6 +285,96 @@ function TagDetails(props: { tag: Tag }) {
 
   return <span className="stat-value__item">{props.tag.Text}</span>;
 }
+
+type ItemDragData = {
+  type: string;
+  index: number;
+};
+
+function ItemDetails(props: {
+  item: InventoryItem;
+  index: number;
+  combatant: Combatant;
+  dragDropType: string;
+}) {
+  const { item, index, combatant, dragDropType } = props;
+
+  const removeItem = () => combatant.RemoveItem(item);
+
+  const onQuantityBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newQuantity = parseInt(e.target.value);
+    if (isNaN(newQuantity) || newQuantity === item.Quantity) {
+      e.target.value = item.Quantity.toString();
+      return;
+    }
+    combatant.ApplyItemChange(
+      item.Name,
+      true,
+      newQuantity - item.Quantity,
+      item.SlotCost
+    );
+  };
+
+  const [, drag] = useDrag({
+    item: { index, type: dragDropType } as ItemDragData
+  });
+
+  const [collectedProps, drop] = useDrop({
+    accept: dragDropType,
+    drop: (dragItem: ItemDragData) => {
+      if (dragItem.index !== index) {
+        combatant.MoveItem(dragItem.index, index);
+      }
+    },
+    collect: (monitor: DropTargetMonitor) => {
+      if (!monitor.isOver() || monitor.getItemType() !== dragDropType) {
+        return { draggedIndex: null };
+      }
+      return { draggedIndex: (monitor.getItem() as ItemDragData).index };
+    }
+  });
+
+  const classNames = ["c-combatant-details__item"];
+  if (collectedProps.draggedIndex !== null) {
+    if (collectedProps.draggedIndex > index) {
+      classNames.push("drop-before");
+    } else if (collectedProps.draggedIndex < index) {
+      classNames.push("drop-after");
+    }
+  }
+
+  return (
+    <li
+      className={classNames.join(" ")}
+      ref={node => drag(drop(node))}
+    >
+      <span
+        className="c-combatant-details__item-grip fas fa-grip-vertical"
+        aria-hidden="true"
+      />
+      {item.Name}
+      {item.Stackable && (
+        <>
+          {" "}
+          <input
+            type="number"
+            className="counter c-combatant-details__item-quantity"
+            min={0}
+            defaultValue={item.Quantity}
+            onBlur={onQuantityBlur}
+            aria-label={`${item.Name} quantity`}
+          />
+        </>
+      )}
+      <button
+        aria-label={`Remove ${item.Name}`}
+        className="c-combatant-details__item-remove fa-clickable fa-times"
+        onClick={removeItem}
+      ></button>
+    </li>
+  );
+}
+
 function renderHPBarStyle(currentHPPercentage) {
   return { width: currentHPPercentage };
 }

@@ -20,7 +20,7 @@ export const RestoreManaPrompt = (
     onSubmit: (model: RestoreManaModel) => {
       const restoreAmount = parseInt(model.restoreAmount);
       if (isNaN(restoreAmount)) {
-        return false;
+        return true;
       }
 
       logManaChange(-restoreAmount, combatantNames);

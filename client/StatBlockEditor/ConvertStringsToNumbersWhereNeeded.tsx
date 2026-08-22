@@ -9,6 +9,15 @@ export const ConvertStringsToNumbersWhereNeeded = (statBlock: StatBlock) => {
   if (statBlock.Mana) {
     statBlock.Mana.Value = castToNumberOrZero(statBlock.Mana.Value);
   }
+  if (statBlock.Resources) {
+    statBlock.Resources.Value = castToNumberOrZero(statBlock.Resources.Value);
+  }
+  if (statBlock.HitDice) {
+    statBlock.HitDice.Value = castToNumberOrZero(statBlock.HitDice.Value);
+  }
+  if (statBlock.Wounds) {
+    statBlock.Wounds.Value = castToNumberOrZero(statBlock.Wounds.Value);
+  }
   statBlock.InitiativeModifier = castToNumberOrZero(
     statBlock.InitiativeModifier
   );

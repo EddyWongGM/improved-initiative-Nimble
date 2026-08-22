@@ -6,6 +6,7 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import * as SocketIO from "socket.io";
 
 import { CombatStats } from "../common/CombatStats";
+import { InventoryDisplayPayload } from "../common/InventoryDisplay";
 import { PlayerViewSettings } from "../common/PlayerViewSettings";
 import { getDefaultSettings } from "../common/Settings";
 import { PlayerViewManager } from "./playerviewmanager";
@@ -150,6 +151,14 @@ export default async function (
         function (id: string, combatStats: CombatStats) {
           joinEncounter(id);
           socket.broadcast.to(id).emit("combat stats", combatStats);
+        }
+      );
+
+      socket.on(
+        "display inventory",
+        function (id: string, inventory: InventoryDisplayPayload | null) {
+          joinEncounter(id);
+          socket.broadcast.to(id).emit("display inventory", inventory);
         }
       );
     }

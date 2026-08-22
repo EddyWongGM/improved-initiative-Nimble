@@ -19,14 +19,18 @@ export function probablyUniqueString(): string {
   return probablyUniqueString;
 }
 
-export function concatenatedStringRegex(strings: string[]): RegExp {
+export function concatenatedStringRegex(
+  strings: string[],
+  options: { caseSensitive?: boolean } = {}
+): RegExp {
   const allStrings = strings
     .map(s => escapeRegExp(s))
     .sort((a, b) => b.length - a.length);
   if (allStrings.length === 0) {
     return new RegExp("a^");
   }
-  return new RegExp(`\\b(${allStrings.join("|")})\\b`, "gim");
+  const flags = options.caseSensitive ? "gm" : "gim";
+  return new RegExp(`\\b(${allStrings.join("|")})\\b`, flags);
 }
 
 export function ParseJSONOrDefault<T>(json: string, defaultValue: T): T {

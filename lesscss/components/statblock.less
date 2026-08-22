@@ -28,14 +28,22 @@
 }
 
 .c-combatant-details__hp,
+.c-combatant-details__resources-wounds,
 .c-combatant-details__tags {
   flex-direction: row;
   margin-top: @extra-small-spacer;
 }
 
 .c-combatant-details__hp {
-  .stat-label.Mana,
-  .stat-label.Level {
+  > * + .stat-label.Mana,
+  > * + .stat-label.Level {
+    margin-left: @medium-spacer;
+  }
+}
+
+.c-combatant-details__resources-wounds {
+  > * + .stat-label.HitDice,
+  > * + .stat-label.Wounds {
     margin-left: @medium-spacer;
   }
 }
@@ -45,6 +53,62 @@
     display: block;
     flex: 1;
   }
+}
+
+.c-combatant-details__items-header {
+  flex-direction: row;
+  align-items: center;
+}
+
+.c-combatant-details__items-toggle {
+  margin-left: @small-spacer;
+  color: rgba(139, 90, 43, 0.4);
+
+  &.c-combatant-details__items-toggle--active {
+    color: rgb(139, 90, 43);
+  }
+}
+
+.c-combatant-details__item-list {
+  list-style-type: none;
+  margin: @small-spacer 0 0;
+  padding: 0;
+  column-count: 2;
+  column-gap: @medium-spacer;
+}
+
+.c-combatant-details__item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: @extra-small-spacer 0;
+  border-top: 2px dashed transparent;
+  border-bottom: 2px dashed transparent;
+  break-inside: avoid;
+
+  &.drop-before {
+    border-top-color: var(--selection-border);
+  }
+
+  &.drop-after {
+    border-bottom-color: var(--selection-border);
+  }
+}
+
+.c-combatant-details__item-grip {
+  cursor: grab;
+  margin-right: @small-spacer;
+  color: var(--text-faded);
+}
+
+input[type="number"].c-combatant-details__item-quantity {
+  width: 3em;
+  padding: @extra-small-spacer;
+  margin-left: @small-spacer;
+}
+
+.c-combatant-details__item-remove {
+  margin-left: @small-spacer;
 }
 
 .c-combatant-details > .HP.AC.speed.Challenge {
@@ -65,6 +129,18 @@
 
 .c-combatant-details {
   flex: 1;
+}
+
+.c-combatant-details__scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .c-statblock {
+    flex-shrink: 0;
+    overflow: visible;
+  }
 }
 
 .c-multiple-combatant-details {
@@ -149,14 +225,6 @@
 
   .stat-value + .notes {
     margin-left: @small-spacer;
-  }
-
-  .power-content {
-    white-space: pre-line;
-    ul,
-    li {
-      white-space: normal;
-    }
   }
 
   .AC,

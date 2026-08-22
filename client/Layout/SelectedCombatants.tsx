@@ -12,11 +12,14 @@ export function SelectedCombatants(props: {
   const selectedCombatants = useSubscription(
     combatantCommander.SelectedCombatants
   );
+  const inventoryDisplayedCombatantId = useSubscription(
+    combatantCommander.InventoryDisplayedCombatantId
+  );
 
   if (selectedCombatants.length === 0) {
     return (
       <div className="selected-combatant">
-        <h2>No Combatant Selected</h2>
+        <h2>No Name Selected</h2>
       </div>
     );
   }
@@ -25,7 +28,7 @@ export function SelectedCombatants(props: {
     return (
       <div className="selected-combatant">
         <div className="combatant-details__header">
-          <h2>Selected Combatant</h2>
+          <h2>Selected Name</h2>
           <Button
             fontAwesomeIcon="times"
             onClick={combatantCommander.Deselect}
@@ -35,6 +38,13 @@ export function SelectedCombatants(props: {
           key={selectedCombatants[0].Combatant.Id}
           combatantViewModel={selectedCombatants[0]}
           displayMode="default"
+          isInventoryDisplayedToPlayers={
+            inventoryDisplayedCombatantId ===
+            selectedCombatants[0].Combatant.Id
+          }
+          onToggleInventoryDisplayToPlayers={
+            combatantCommander.ToggleInventoryDisplayToPlayers
+          }
         />
       </div>
     );
@@ -42,7 +52,7 @@ export function SelectedCombatants(props: {
     return (
       <div className="selected-combatant">
         <div className="combatant-details__header">
-          <h2>Selected Combatants</h2>
+          <h2>Selected Names</h2>
           <Button
             fontAwesomeIcon="times"
             onClick={combatantCommander.Deselect}

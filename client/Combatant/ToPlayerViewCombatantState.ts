@@ -9,11 +9,22 @@ export function ToPlayerViewCombatantState(
   const sendImage = env.HasEpicInitiative;
   return {
     Name: combatant.DisplayName(),
+    IndexLabel: GetIndexLabel(combatant),
     Id: combatant.Id,
     HPDisplay: GetHPDisplay(combatant),
     HPColor: GetHPColor(combatant),
     ManaDisplay: GetManaDisplay(combatant),
     ManaColor: GetManaColor(combatant),
+    ResourcesDisplay: GetResourcesDisplay(combatant),
+    ResourcesColor: GetResourcesColor(combatant),
+    HitDiceDisplay: GetHitDiceDisplay(combatant),
+    HitDiceColor: GetHitDiceColor(combatant),
+    WoundsDisplay: GetWoundsDisplay(combatant),
+    WoundsColor: GetWoundsColor(combatant),
+    GoldDisplay: GetGoldDisplay(combatant),
+    GoldColor: GetGoldColor(combatant),
+    InventoryDisplay: GetInventoryDisplay(combatant),
+    InventoryColor: GetInventoryColor(combatant),
     Initiative: combatant.Initiative(),
     IsPlayerCharacter: combatant.IsPlayerCharacter(),
     Tags: combatant
@@ -30,8 +41,27 @@ export function ToPlayerViewCombatantState(
     ImageURL: sendImage ? combatant.StatBlock().ImageURL : "",
     AC: combatant.RevealedAC() ? combatant.StatBlock().AC.Value : undefined,
     Color: combatant.Color(),
-    ReactionsSpent: combatant.ReactionsSpent()
+    ReactionsSpent: combatant.ReactionsSpent(),
+    HasTakenTurn: combatant.HasTakenTurn()
   };
+}
+
+function GetIndexLabel(combatant: Combatant): number | undefined {
+  if (combatant.Alias()) {
+    return undefined;
+  }
+  if (
+    CurrentSettings().Rules.AlwaysNumberMonsters &&
+    !combatant.ActsInPlayerPhase()
+  ) {
+    return combatant.IndexLabel();
+  }
+  const name = combatant.StatBlock().Name;
+  const combatantCount = combatant.Encounter.CombatantCountsByName()[name];
+  if (combatantCount > 1) {
+    return combatant.IndexLabel();
+  }
+  return undefined;
 }
 
 function GetHPDisplay(combatant: Combatant): string {
@@ -74,8 +104,13 @@ function GetManaDisplay(combatant: Combatant): string | undefined {
     ? CurrentSettings().PlayerView.PlayerHPVerbosity
     : CurrentSettings().PlayerView.MonsterHPVerbosity;
   const currentMana = combatant.CurrentMana();
+  const temporaryMana = combatant.TemporaryMana();
   if (manaVerbosity == "Actual HP") {
-    return `${currentMana}/${maxMana}`;
+    // Show current only - the max is DM-only information.
+    if (temporaryMana) {
+      return `${currentMana}+${temporaryMana}`;
+    }
+    return `${currentMana}`;
   }
   if (manaVerbosity == "Hide All") {
     return "";
@@ -110,6 +145,206 @@ function GetManaColor(combatant: Combatant): string | undefined {
     return "auto";
   }
   return "rgb(0,120,220)";
+}
+
+function GetResourcesDisplay(combatant: Combatant): string | undefined {
+  const maxResources = combatant.MaxResources();
+  if (maxResources === undefined) {
+    return undefined;
+  }
+
+  const resourcesVerbosity = combatant.IsPlayerCharacter()
+    ? CurrentSettings().PlayerView.PlayerHPVerbosity
+    : CurrentSettings().PlayerView.MonsterHPVerbosity;
+  const currentResources = combatant.CurrentResources();
+  const temporaryResources = combatant.TemporaryResources();
+  if (resourcesVerbosity == "Actual HP") {
+    // Show current only - the max is DM-only information.
+    if (temporaryResources) {
+      return `${currentResources}+${temporaryResources}`;
+    }
+    return `${currentResources}`;
+  }
+  if (resourcesVerbosity == "Hide All") {
+    return "";
+  }
+  if (resourcesVerbosity == "Damage Taken") {
+    return (currentResources - maxResources).toString();
+  }
+  if (currentResources <= 0) {
+    return "<span class='defeatedHP'>Empty</span>";
+  } else if (currentResources < maxResources / 2) {
+    return "<span class='bloodiedHP'>Low</span>";
+  } else if (currentResources < maxResources) {
+    return "<span class='hurtHP'>Reduced</span>";
+  }
+  return "<span class='healthyHP'>Full</span>";
+}
+
+function GetResourcesColor(combatant: Combatant): string | undefined {
+  const maxResources = combatant.MaxResources();
+  if (maxResources === undefined) {
+    return undefined;
+  }
+
+  const resourcesVerbosity = combatant.IsPlayerCharacter()
+    ? CurrentSettings().PlayerView.PlayerHPVerbosity
+    : CurrentSettings().PlayerView.MonsterHPVerbosity;
+  if (
+    resourcesVerbosity == "Monochrome Label" ||
+    resourcesVerbosity == "Hide All" ||
+    resourcesVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  return "rgb(230,120,20)";
+}
+
+function GetHitDiceDisplay(combatant: Combatant): string | undefined {
+  const maxHitDice = combatant.MaxHitDice();
+  const currentHitDice = combatant.CurrentHitDice();
+  if (
+    maxHitDice === undefined ||
+    !combatant.RevealedHitDice() ||
+    currentHitDice >= maxHitDice
+  ) {
+    // Don't reveal the Hit Dice track in Player View while it's still full -
+    // only show it once at least one has been spent.
+    return undefined;
+  }
+
+  const hitDiceVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  const temporaryHitDice = combatant.TemporaryHitDice();
+  if (hitDiceVerbosity == "Actual HP") {
+    // Show the delta from max (e.g. "-1"), not the raw count - the max
+    // itself is DM-only information.
+    if (temporaryHitDice) {
+      return `${currentHitDice - maxHitDice}+${temporaryHitDice}`;
+    }
+    return (currentHitDice - maxHitDice).toString();
+  }
+  if (hitDiceVerbosity == "Hide All") {
+    return "";
+  }
+  if (hitDiceVerbosity == "Damage Taken") {
+    return (currentHitDice - maxHitDice).toString();
+  }
+  if (currentHitDice <= 0) {
+    return "<span class='defeatedHP'>Empty</span>";
+  } else if (currentHitDice < maxHitDice / 2) {
+    return "<span class='bloodiedHP'>Low</span>";
+  } else if (currentHitDice < maxHitDice) {
+    return "<span class='hurtHP'>Reduced</span>";
+  }
+  return "<span class='healthyHP'>Full</span>";
+}
+
+function GetHitDiceColor(combatant: Combatant): string | undefined {
+  const maxHitDice = combatant.MaxHitDice();
+  const currentHitDice = combatant.CurrentHitDice();
+  if (
+    maxHitDice === undefined ||
+    !combatant.RevealedHitDice() ||
+    currentHitDice >= maxHitDice
+  ) {
+    return undefined;
+  }
+
+  const hitDiceVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (
+    hitDiceVerbosity == "Monochrome Label" ||
+    hitDiceVerbosity == "Hide All" ||
+    hitDiceVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  return "rgb(200,30,30)";
+}
+
+function GetWoundsDisplay(combatant: Combatant): string | undefined {
+  const maxWounds = combatant.MaxWounds();
+  const currentWounds = combatant.CurrentWounds();
+  if (maxWounds === undefined || currentWounds <= 0) {
+    // Don't reveal the Wounds track in Player View until a wound has
+    // actually been taken.
+    return undefined;
+  }
+
+  const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  const temporaryWounds = combatant.TemporaryWounds();
+  if (woundsVerbosity == "Actual HP") {
+    // Show current only - the max is DM-only information.
+    if (temporaryWounds) {
+      return `${currentWounds}+${temporaryWounds}`;
+    }
+    return `${currentWounds}`;
+  }
+  if (woundsVerbosity == "Hide All") {
+    return "";
+  }
+  if (woundsVerbosity == "Damage Taken") {
+    return currentWounds.toString();
+  }
+  if (currentWounds >= maxWounds) {
+    return "<span class='defeatedHP'>Defeated</span>";
+  } else if (currentWounds > maxWounds / 2) {
+    return "<span class='bloodiedHP'>Wounded</span>";
+  }
+  return "<span class='hurtHP'>Hurt</span>";
+}
+
+function GetWoundsColor(combatant: Combatant): string | undefined {
+  const maxWounds = combatant.MaxWounds();
+  const currentWounds = combatant.CurrentWounds();
+  if (maxWounds === undefined || currentWounds <= 0) {
+    return undefined;
+  }
+
+  const woundsVerbosity = CurrentSettings().PlayerView.PlayerHPVerbosity;
+  if (
+    woundsVerbosity == "Monochrome Label" ||
+    woundsVerbosity == "Hide All" ||
+    woundsVerbosity == "Damage Taken"
+  ) {
+    return "auto";
+  }
+  return "rgb(200,30,180)";
+}
+
+function GetGoldDisplay(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedGold()) {
+    return undefined;
+  }
+
+  return `${combatant.CurrentGold()}`;
+}
+
+function GetGoldColor(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedGold()) {
+    return undefined;
+  }
+
+  return "rgb(212,163,42)";
+}
+
+function GetInventoryDisplay(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedItems()) {
+    return undefined;
+  }
+
+  return `${combatant.InventorySlotsUsed()}/${combatant.MaxInventorySlots()}`;
+}
+
+function GetInventoryColor(combatant: Combatant): string | undefined {
+  if (!combatant.IsPlayerCharacter() || !combatant.RevealedItems()) {
+    return undefined;
+  }
+
+  if (combatant.InventorySlotsUsed() > combatant.MaxInventorySlots()) {
+    return "rgb(200,30,30)";
+  }
+
+  return "rgb(139,90,43)";
 }
 
 function GetHPColor(combatant: Combatant) {

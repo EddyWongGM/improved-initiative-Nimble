@@ -124,6 +124,27 @@ describe("PlayerViewModel", () => {
     expect(playerView.queryByTestId("combatant-portrait")).toBeFalsy();
   });
 
+  test("DisplayPlayerViewInventory shows the inventory popup", () => {
+    const playerView = render(<PlayerView {...playerViewProps} />);
+
+    expect(playerView.queryByText(/Inventory/)).toBeFalsy();
+
+    playerView.rerender(
+      <PlayerView
+        {...playerViewProps}
+        inventoryDisplay={{
+          combatantName: "Test Hero",
+          items: [
+            { Name: "Torch", Stackable: true, Quantity: 4, SlotCost: 1 }
+          ]
+        }}
+      />
+    );
+
+    expect(playerView.getByText(/Test Hero.s Inventory/)).toBeTruthy();
+    expect(playerView.getByText(/Torch/)).toBeTruthy();
+  });
+
   test("Applying damage does not splash combatant portraits", () => {
     const combatant1 = addCombatantFromStatBlock(encounter, {
       ...StatBlock.Default(),

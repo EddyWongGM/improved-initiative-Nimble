@@ -36,6 +36,9 @@ export interface StatBlock extends Listable {
   HP: ValueAndNotes;
   AC: ValueAndNotes;
   Mana?: ValueAndNotes;
+  Resources?: ValueAndNotes;
+  HitDice?: ValueAndNotes;
+  Wounds?: ValueAndNotes;
   Speed: string[];
   Abilities: AbilityScores;
   InitiativeModifier?: number;
@@ -102,7 +105,16 @@ export namespace StatBlock {
   };
 
   export const IsPlayerCharacter = (statBlock: StatBlock): boolean =>
-    statBlock.Player.length > 0;
+    statBlock.Player == "player";
+
+  export const IsCompanion = (statBlock: StatBlock): boolean =>
+    statBlock.Player == "companion";
+
+  // A companion (e.g. a player's pet/sidekick) isn't a PC - it doesn't get
+  // Wounds/Gold/Hit Dice, Level-vs-Challenge labeling, etc. - but it acts
+  // alongside the party, not the monsters, for turn-order/phase purposes.
+  export const ActsInPlayerPhase = (statBlock: StatBlock): boolean =>
+    IsPlayerCharacter(statBlock) || IsCompanion(statBlock);
 
   export const Default = (): StatBlock => ({
     Id: probablyUniqueString(),

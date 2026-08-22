@@ -4,6 +4,7 @@ import { render as renderReact } from "react-dom";
 import { CombatStats } from "../../common/CombatStats";
 import { TagState } from "../../common/CombatantState";
 import { EncounterState } from "../../common/EncounterState";
+import { InventoryDisplayPayload } from "../../common/InventoryDisplay";
 import { PlayerViewCombatantState } from "../../common/PlayerViewCombatantState";
 import { PlayerViewSettings } from "../../common/PlayerViewSettings";
 import { PlayerViewState } from "../../common/PlayerViewState";
@@ -49,7 +50,8 @@ export class ReactPlayerView {
         this.renderPlayerView({
           encounterState: encounter,
           settings: this.playerViewState.settings,
-          combatStats: this.playerViewState.combatStats
+          combatStats: this.playerViewState.combatStats,
+          inventoryDisplay: this.playerViewState.inventoryDisplay
         });
       }
     );
@@ -57,16 +59,29 @@ export class ReactPlayerView {
       this.renderPlayerView({
         encounterState: this.playerViewState.encounterState,
         settings: settings,
-        combatStats: this.playerViewState.combatStats
+        combatStats: this.playerViewState.combatStats,
+        inventoryDisplay: this.playerViewState.inventoryDisplay
       });
     });
     this.socket.on("combat stats", (stats: CombatStats) => {
       this.renderPlayerView({
         encounterState: this.playerViewState.encounterState,
         settings: this.playerViewState.settings,
-        combatStats: stats
+        combatStats: stats,
+        inventoryDisplay: this.playerViewState.inventoryDisplay
       });
     });
+    this.socket.on(
+      "display inventory",
+      (inventory: InventoryDisplayPayload | null) => {
+        this.renderPlayerView({
+          encounterState: this.playerViewState.encounterState,
+          settings: this.playerViewState.settings,
+          combatStats: this.playerViewState.combatStats,
+          inventoryDisplay: inventory
+        });
+      }
+    );
 
     if (this.socket.connected) {
       this.joinEncounter();
@@ -87,6 +102,7 @@ export class ReactPlayerView {
         encounterState={this.playerViewState.encounterState}
         settings={this.playerViewState.settings}
         combatStats={this.playerViewState.combatStats}
+        inventoryDisplay={this.playerViewState.inventoryDisplay}
         onSuggestDamage={this.suggestDamage}
         onSuggestTag={this.suggestTag}
       />,

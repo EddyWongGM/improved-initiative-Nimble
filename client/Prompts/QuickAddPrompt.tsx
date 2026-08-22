@@ -18,7 +18,7 @@ export function QuickAddPrompt(
   return {
     autoFocusSelector: "input[name='Name']",
     children: (
-      <StandardPromptLayout className="p-quick-add" label="Quick Add Combatant">
+      <StandardPromptLayout className="p-quick-add" label="Quick Add Name">
         <Field name="Name" type="text" placeholder="Name" autoComplete="off" />
         <Field name="MaxHP" type="number" placeholder="HP" />
         <Field name="AC" type="number" placeholder="AC" />
@@ -38,7 +38,7 @@ export function QuickAddPrompt(
 
       const statBlock: StatBlock = {
         ...StatBlock.Default(),
-        Name: model.Name || "New Combatant",
+        Name: model.Name || "New Name",
         HP: { Value: model.MaxHP, Notes: "" },
         AC: { Value: model.AC ?? 10, Notes: "" },
         InitiativeModifier: model.Initiative ?? 0
