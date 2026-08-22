@@ -11,6 +11,7 @@ import { Metrics } from "../Utility/Metrics";
 import { CombatTimer } from "../Widgets/CombatTimer";
 import { Tag } from "./Tag";
 import { GetInventorySlotsUsed } from "./InventorySlots";
+import { ApplyResourcePoolChange } from "./ApplyResourcePoolChange";
 import { RollResult } from "../Rules/RollResult";
 import { AbilityCheckResult } from "../Rules/Rules";
 import { AutoGroupInitiativeOption } from "../../common/Settings";
@@ -378,81 +379,36 @@ export class Combatant {
   }
 
   public ApplyManaChange(amount: number) {
-    const maxMana = this.MaxMana() ?? 0;
-    let currentMana = this.CurrentMana();
-    let temporaryMana = this.TemporaryMana();
-
-    if (amount > 0) {
-      temporaryMana -= amount;
-      if (temporaryMana < 0) {
-        currentMana += temporaryMana;
-        temporaryMana = 0;
-      }
-    } else {
-      currentMana -= amount;
-    }
-
-    if (currentMana < 0) {
-      currentMana = 0;
-    }
-    if (currentMana > maxMana) {
-      currentMana = maxMana;
-    }
-
-    this.CurrentMana(currentMana);
-    this.TemporaryMana(temporaryMana);
+    const { current, temporary } = ApplyResourcePoolChange(
+      this.CurrentMana(),
+      this.TemporaryMana(),
+      this.MaxMana() ?? 0,
+      amount
+    );
+    this.CurrentMana(current);
+    this.TemporaryMana(temporary);
   }
 
   public ApplyResourcesChange(amount: number) {
-    const maxResources = this.MaxResources() ?? 0;
-    let currentResources = this.CurrentResources();
-    let temporaryResources = this.TemporaryResources();
-
-    if (amount > 0) {
-      temporaryResources -= amount;
-      if (temporaryResources < 0) {
-        currentResources += temporaryResources;
-        temporaryResources = 0;
-      }
-    } else {
-      currentResources -= amount;
-    }
-
-    if (currentResources < 0) {
-      currentResources = 0;
-    }
-    if (currentResources > maxResources) {
-      currentResources = maxResources;
-    }
-
-    this.CurrentResources(currentResources);
-    this.TemporaryResources(temporaryResources);
+    const { current, temporary } = ApplyResourcePoolChange(
+      this.CurrentResources(),
+      this.TemporaryResources(),
+      this.MaxResources() ?? 0,
+      amount
+    );
+    this.CurrentResources(current);
+    this.TemporaryResources(temporary);
   }
 
   public ApplyHitDiceChange(amount: number) {
-    const maxHitDice = this.MaxHitDice() ?? 0;
-    let currentHitDice = this.CurrentHitDice();
-    let temporaryHitDice = this.TemporaryHitDice();
-
-    if (amount > 0) {
-      temporaryHitDice -= amount;
-      if (temporaryHitDice < 0) {
-        currentHitDice += temporaryHitDice;
-        temporaryHitDice = 0;
-      }
-    } else {
-      currentHitDice -= amount;
-    }
-
-    if (currentHitDice < 0) {
-      currentHitDice = 0;
-    }
-    if (currentHitDice > maxHitDice) {
-      currentHitDice = maxHitDice;
-    }
-
-    this.CurrentHitDice(currentHitDice);
-    this.TemporaryHitDice(temporaryHitDice);
+    const { current, temporary } = ApplyResourcePoolChange(
+      this.CurrentHitDice(),
+      this.TemporaryHitDice(),
+      this.MaxHitDice() ?? 0,
+      amount
+    );
+    this.CurrentHitDice(current);
+    this.TemporaryHitDice(temporary);
   }
 
   public ApplyGoldChange(amount: number) {
@@ -539,31 +495,17 @@ export class Combatant {
   }
 
   public ApplyWoundsChange(amount: number) {
-    const maxWounds = this.MaxWounds() ?? 0;
-    let currentWounds = this.CurrentWounds();
-    let temporaryWounds = this.TemporaryWounds();
-
-    if (amount > 0) {
-      // Temporary Wounds act as protection: they absorb incoming wounds
-      // before the real Wounds count goes up.
-      temporaryWounds -= amount;
-      if (temporaryWounds < 0) {
-        currentWounds -= temporaryWounds;
-        temporaryWounds = 0;
-      }
-    } else {
-      currentWounds += amount;
-    }
-
-    if (currentWounds < 0) {
-      currentWounds = 0;
-    }
-    if (currentWounds > maxWounds) {
-      currentWounds = maxWounds;
-    }
-
-    this.CurrentWounds(currentWounds);
-    this.TemporaryWounds(temporaryWounds);
+    // Temporary Wounds act as protection: they absorb incoming wounds
+    // before the real Wounds count goes up.
+    const { current, temporary } = ApplyResourcePoolChange(
+      this.CurrentWounds(),
+      this.TemporaryWounds(),
+      this.MaxWounds() ?? 0,
+      amount,
+      /* positiveAmountIncreasesCurrent */ true
+    );
+    this.CurrentWounds(current);
+    this.TemporaryWounds(temporary);
   }
 
   public ApplyTemporaryHP(tempHP: number) {

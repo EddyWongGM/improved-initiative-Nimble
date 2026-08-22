@@ -4,6 +4,9 @@ _Combat tracker for Dungeons and Dragons (D&amp;D) 5th Edition_
 
 The official Improved Initiative app lives at https://improvedinitiative.app/
 
+This fork adapts the app for the [Nimble](https://nimblerpg.com/) RPG system.
+See [NIMBLE_CONVERSION.md](NIMBLE_CONVERSION.md) for what changed and why.
+
 ## Local Development
 
 ### Requirements

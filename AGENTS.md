@@ -16,6 +16,12 @@ The production app is https://www.improvedinitiative.app/. The project is
 sustained by Patreon-backed premium features, so changes should respect the
 free core experience while preserving paid-account behavior.
 
+This fork adapts the app for the Nimble RPG system rather than D&D 5E. See
+[NIMBLE_CONVERSION.md](NIMBLE_CONVERSION.md) for what changed and why before
+touching combatant resources, companions, or phase/initiative sorting —
+those areas now have Nimble-specific rules layered on top of the D&D-era
+code described below.
+
 This is a long-lived codebase maintained since 2014. Favor careful,
 incremental changes over broad rewrites.
 
@@ -51,6 +57,19 @@ Be especially cautious around:
 - Saved encounters and localStorage/database compatibility.
 - Player View behavior and settings.
 - Patreon login, account sync, and Epic Initiative rewards.
+- Nimble resource pools (Mana/Resources/Hit Dice/Wounds/Gold/Inventory) —
+  each has its own sign convention, PC-vs-companion-vs-monster gating, and
+  hide/reveal-from-players default; copying one as a template for another
+  without checking NIMBLE_CONVERSION.md has already caused a real sign-flip
+  bug. The clamp/temporary-absorption math for Mana/Resources/Hit
+  Dice/Wounds is now centralized in `Combatant.ts`'s
+  `ApplyResourcePoolChange` helper, so that specific failure mode is
+  narrower — but the display/percentage logic in `CombatantViewModel.ts`
+  and `ToPlayerViewCombatantState.ts` is still duplicated per resource and
+  remains a live risk. Also: companion sorting (`ActsInPlayerPhase`) and
+  phase-order toggling (`SortByPhase` vs `SortByInitiative`) — several call
+  sites still key off the older `IsPlayerCharacter` check and need updating
+  in sync with any new companion-aware feature.
 
 Do not alter product functionality outside the specific scope of the user's
 request.
@@ -149,6 +168,12 @@ suite, though Codex Desktop may need the direct bundled-Node command above.
 For TypeScript/TSX changes, run `npm run lint` when feasible. For behavior
 touching high-risk workflows, prefer a focused manual verification plan in
 addition to lint/build checks.
+
+Known baseline, not regressions to chase: `npx tsc --noEmit -p
+client/tsconfig.json` should exit with 0 errors (via `skipLibCheck` — see
+[KNOWN-TYPE-ERRORS.md](KNOWN-TYPE-ERRORS.md)), and the Jest suite has 2
+pre-existing failures in `InitiativeList.test.tsx` unrelated to the Nimble
+work (a stale pre-2021 test looking for a removed `data-testid`).
 
 ## Collaboration Expectations
 
