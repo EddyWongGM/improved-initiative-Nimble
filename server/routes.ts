@@ -18,6 +18,7 @@ import {
   updateSessionAccountFeatures
 } from "./patreon";
 import { PlayerViewManager } from "./playerviewmanager";
+import { shutdownServer } from "./shutdown";
 import configureStorageRoutes from "./storageroutes";
 import { AccountStatus } from "./user";
 import { configureOpen5eContent } from "./configureOpen5eContent";
@@ -28,13 +29,28 @@ const baseUrl = process.env.BASE_URL || "";
 const patreonClientId = process.env.PATREON_CLIENT_ID || "PATREON_CLIENT_ID";
 const defaultAccountLevel = process.env.DEFAULT_ACCOUNT_LEVEL || "none";
 const googleAnalyticsId = process.env.GOOGLE_ANALYTICS_ID || "";
+// Opt-in only: this codebase also runs as the public hosted service, so a
+// route that stops the process must never exist unless explicitly enabled
+// for a local, single-user instance.
+const allowServerShutdown = process.env.ALLOW_SERVER_SHUTDOWN === "true";
+// A per-process secret required by /shutdown, generated fresh on each server
+// start. Only the DM-facing tracker page is handed this token (see
+// getClientOptions) - the Player View page, which other devices on the LAN
+// can reach, never receives it, so those devices can't call /shutdown even
+// though they share an origin with it.
+const shutdownToken = probablyUniqueString();
 
 export type Req = Express.Request & express.Request;
 export type Res = Express.Response & express.Response;
 
 const appVersion = require("../package.json").version;
 
-const getClientOptions = (session: Express.Session) => {
+const getClientOptions = (
+  session: Express.Session,
+  options?: { includeShutdownCapability?: boolean }
+) => {
+  const includeShutdownCapability =
+    allowServerShutdown && (options?.includeShutdownCapability ?? false);
   const encounterId = session.encounterId || probablyUniqueString();
   const patreonLoginUrl =
     "http://www.patreon.com/oauth2/authorize" +
@@ -55,7 +71,9 @@ const getClientOptions = (session: Express.Session) => {
     SendMetrics: process.env.METRICS_DB_CONNECTION_STRING != undefined,
     GoogleAnalyticsId: googleAnalyticsId,
     PostedEncounter: null,
-    SentryDSN: process.env.SENTRY_DSN || null
+    SentryDSN: process.env.SENTRY_DSN || null,
+    CanShutdownServer: includeShutdownCapability,
+    ShutdownToken: includeShutdownCapability ? shutdownToken : null
   };
 
   if (session.postedEncounter) {
@@ -113,6 +131,14 @@ export default async function (
       throw "Session is not available";
     }
 
+    // A locally-hosted instance always has the same default DM - the
+    // marketing landing page (aimed at anonymous first-time visitors to the
+    // hosted service) doesn't apply, and sending them through it risks
+    // "Build an Encounter" discarding their in-progress autosaved encounter.
+    if (defaultAccountLevel !== "none") {
+      return res.redirect("/e/");
+    }
+
     session.encounterId = await playerViews.InitializeNew();
 
     const renderOptions = getClientOptions(session);
@@ -145,7 +171,9 @@ export default async function (
 
     updateSession(session);
 
-    const options = getClientOptions(session);
+    const options = getClientOptions(session, {
+      includeShutdownCapability: true
+    });
     return res.render("tracker", options);
   });
 
@@ -177,6 +205,32 @@ export default async function (
   configurePatreonWebhookReceiver(app);
   configureStorageRoutes(app);
   startNewsUpdates(app);
+
+  if (allowServerShutdown) {
+    app.post("/shutdown", (req: Req, res: Res) => {
+      // Requiring a JSON content-type means a plain HTML form (as used by
+      // cross-site request forgery) cannot trigger this - the browser will
+      // not send this content-type without a same-origin script doing so,
+      // and this server does not send CORS headers permitting cross-origin
+      // access to this content-type from another origin.
+      if (req.headers["content-type"] !== "application/json") {
+        return res.sendStatus(400);
+      }
+      // The content-type check above only rules out classic form-based CSRF.
+      // This local instance can also be reached by other devices on the LAN
+      // (e.g. a player's tablet showing the Player View), which share this
+      // origin and so aren't stopped by that check alone - requiring this
+      // per-process token, only ever sent to the DM-facing tracker page,
+      // keeps them from triggering a shutdown themselves.
+      if (req.body?.token !== shutdownToken) {
+        return res.sendStatus(403);
+      }
+      res.sendStatus(200);
+      res.on("finish", () => {
+        shutdownServer();
+      });
+    });
+  }
 
   return configureOpen5eContentPromise;
 }

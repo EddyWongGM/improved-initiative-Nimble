@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "../../Components/Button";
 import { env } from "../../Environment";
 import { Metrics } from "../../Utility/Metrics";
+import { ConfirmAndShutdownServer } from "../../Utility/ShutdownServer";
 import { TipCarousel } from "./TipCarousel";
 
 interface AboutProps {
@@ -71,6 +72,14 @@ export class About extends React.Component<AboutProps> {
             text="Repeat Tutorial"
             onClick={this.props.repeatTutorial}
           />
+          {env.CanShutdownServer && (
+            <Button
+              additionalClassNames="shutdown-server"
+              fontAwesomeIcon="power-off"
+              text="Shut Down Server"
+              onClick={ConfirmAndShutdownServer}
+            />
+          )}
         </div>
         <div className="about__version">
           Version {process.env.VERSION || "unknown"}

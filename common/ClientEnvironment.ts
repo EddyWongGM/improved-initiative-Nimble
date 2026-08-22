@@ -10,4 +10,6 @@ export interface ClientEnvironment {
   SendMetrics: boolean;
   GoogleAnalyticsId: string;
   SentryDSN: string | null;
+  CanShutdownServer: boolean;
+  ShutdownToken: string | null;
 }

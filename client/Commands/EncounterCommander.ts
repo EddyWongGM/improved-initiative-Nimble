@@ -15,6 +15,7 @@ import { QuickAddPrompt } from "../Prompts/QuickAddPrompt";
 import { RollDicePrompt } from "../Prompts/RollDicePrompt";
 import { ToggleFullscreen } from "./ToggleFullscreen";
 import { PersistentCharacter } from "../../common/PersistentCharacter";
+import { ConfirmAndShutdownServer } from "../Utility/ShutdownServer";
 
 export class EncounterCommander {
   constructor(private tracker: TrackerViewModel) {}
@@ -76,6 +77,10 @@ export class EncounterCommander {
     NotifyTutorialOfAction("ShowSettings");
     this.tracker.SettingsVisible(true);
     Metrics.TrackEvent(Metrics.Event.SettingsOpened);
+  };
+
+  public ShutdownServer = (): void => {
+    ConfirmAndShutdownServer();
   };
 
   public ToggleToolbarWidth = (): void => {
